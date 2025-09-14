@@ -10,6 +10,7 @@ import logging
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from utils import is_market_open
 import alerts
+import report_logger
 
 def get_kite_client():
     """Initializes and returns a KiteConnect client instance."""
@@ -149,6 +150,7 @@ def find_otm_put_and_alert(kite, underlying_name):
         logging.info(alert_message)
         alerts.send_email(f"Williams %R Alert for {underlying_name}", alert_message)
         alerts.send_whatsapp(alert_message)
+        report_logger.log_alert("williams_r_alert", alert_message)
 
     except Exception as e:
         logging.error(f"Error in find_otm_put_and_alert: {e}")
