@@ -5,6 +5,7 @@ import importlib
 import threading
 from utils import setup_logging, is_market_open
 import report_logger
+import sys
 
 def get_active_strategy_modules():
     """Reads the config and dynamically imports all active strategy modules."""
@@ -30,21 +31,26 @@ def get_active_strategy_modules():
 def strategy_runner(strategy_module, poll_interval):
     """The function that will be executed by each strategy thread."""
     logging.info(f"Thread for strategy '{strategy_module.__name__}' started.")
-    while True:
+    while is_market_open():
         try:
-            if is_market_open():
-                strategy_module.run_strategy()
+            strategy_module.run_strategy()
             # The sleep is inside the loop of the thread
             time.sleep(poll_interval)
         except Exception as e:
             logging.error(f"An error occurred in strategy {strategy_module.__name__}: {e}", exc_info=True)
             # Wait before retrying in case of an error
             time.sleep(poll_interval)
+    logging.info(f"Market closed. Stopping thread for strategy '{strategy_module.__name__}'.")
 
 
 def main():
     """Main function to run the alert bot."""
     setup_logging()
+
+    # Check market status at startup
+    if not is_market_open():
+        logging.info("Market is currently closed. The bot will not start. Exiting.")
+        sys.exit()
 
     config = configparser.ConfigParser()
     config.read('config/config.ini')
@@ -55,42 +61,29 @@ def main():
         logging.error("No valid strategies found. Exiting.")
         return
 
-    logging.info(f"Starting Trading Alert Bot with {len(strategy_modules)} strategies.")
+    logging.info(f"Market is open. Starting Trading Alert Bot with {len(strategy_modules)} strategies.")
     logging.info(f"Polling interval for all strategies: {poll_interval} seconds.")
+
+    # Reset daily reporters at the start of the day
+    report_logger.reset_daily_alerts()
 
     # Create and start a thread for each strategy
     threads = []
     for module in strategy_modules:
         thread = threading.Thread(target=strategy_runner, args=(module, poll_interval))
-        thread.daemon = True  # Threads will exit when the main program exits
+        # No longer daemon threads, we will wait for them to finish
         thread.start()
         threads.append(thread)
 
-    # The main loop now handles EOD reporting and daily resets
-    market_was_open = False
-    while True:
-        try:
-            market_is_currently_open = is_market_open()
+    # Wait for all strategy threads to complete. They will exit when the market closes.
+    for thread in threads:
+        thread.join()
 
-            if market_is_currently_open and not market_was_open:
-                logging.info("Market has just opened. Resetting daily reporters.")
-                report_logger.reset_daily_alerts()
+    # Perform end-of-day tasks after all threads have completed
+    logging.info("All strategy threads have completed. Generating end-of-day CSV report.")
+    report_logger.generate_daily_csv_report()
 
-            elif not market_is_currently_open and market_was_open:
-                logging.info("Market has just closed. Generating end-of-day CSV report.")
-                report_logger.generate_daily_csv_report()
-
-            market_was_open = market_is_currently_open
-
-            # The main thread can sleep for a longer interval, as it only checks for market close
-            time.sleep(60)
-
-        except KeyboardInterrupt:
-            logging.info("Bot stopped by user. Exiting.")
-            break
-        except Exception as e:
-            logging.error(f"An unexpected error occurred in the main loop: {e}", exc_info=True)
-            time.sleep(60)
+    logging.info("EOD tasks complete. Exiting application.")
 
 
 if __name__ == "__main__":

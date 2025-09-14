@@ -1,0 +1,45 @@
+Trading Alert Bot - Instructions
+
+Here is a step-by-step guide on how to run the trading alert bot:
+
+### Step 1: Fill in the Configuration File
+
+Before you run the bot, you need to provide your credentials and settings in the `config/config.ini` file.
+
+1.  **Zerodha API Credentials:**
+    *   Open `config/config.ini`.
+    *   In the `[zerodha]` section, fill in your `api_key` and `api_secret`.
+    *   You also need to provide an `access_token`. This token needs to be generated daily. You can create a small separate script to do this using the Kite Connect API documentation, or generate it manually each day before starting the bot.
+
+2.  **Alerting Channels (Optional):**
+    *   To receive **email alerts**, go to the `[email]` section, set `enabled = true`, and fill in your SMTP server details and email addresses.
+    *   To receive **WhatsApp alerts**, go to the `[whatsapp]` section, set `enabled = true`, and fill in your Twilio account details (`twilio_sid`, `twilio_token`, etc.).
+
+3.  **Select Strategies:**
+    *   In the `[general]` section, the `active_strategies` key lets you choose which strategies to run. You can provide a comma-separated list.
+    *   Example: `active_strategies = williams_r_alert,oi_screener,oi_spurt_screener`. You can remove any you don't want to run.
+
+### Step 2: Install the Required Libraries
+
+Open your terminal or command prompt and run the following command to install all the necessary Python packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Step 3: Run the Bot
+
+Once the configuration is complete and the dependencies are installed, you can start the bot with this command:
+
+```bash
+python3 main.py
+```
+
+The bot will start running. It will log its activities to the console and to daily log files in the `logs/` directory.
+- If the market is open, it will run the configured strategies in parallel.
+- If the market is closed when you start it, the bot will print a message and exit.
+- Once the market closes, the bot will automatically generate an end-of-day report and then exit cleanly.
+
+### Step 4: Check the Logs
+
+At the end of each market day, the bot will automatically generate a CSV report of all the alerts from that day. You can find this report in the `logs/` directory, with a filename like `EOD_Report_YYYY-MM-DD.csv`.
