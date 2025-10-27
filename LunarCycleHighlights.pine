@@ -66,16 +66,16 @@ f_y_pos(pos_str, is_high) =>
     pos_str == "top" ? base + mult * atr : base - mult * atr
 boxWidthMs = boxWidthDays * 24 * 60 * 60 * 1000
 if isAmaFirst
-    box.new(left=time, right=time + boxWidthMs, top=highestHigh, bottom=lowestLow, xloc=xloc.bar_time, border_color=color.new(amavasyaColor, 80), bgcolor=amavasyaBgColor)
+    box.new(left=time, right=time + boxWidthMs, top=chart.info.price_max, bottom=chart.info.price_min, xloc=xloc.bar_time, border_color=color.new(amavasyaColor, 80), bgcolor=amavasyaBgColor)
     if showEventBeginLabels
         label.new(x=time, y=f_y_pos(amavasyaLabelPos, true), xloc=xloc.bar_time, yloc=yloc.price, text=showEmojis ? "🌑 Amavasya begins" : "Amavasya begins", style=label.style_label_left, color=amavasyaColor, textcolor=color.white)
 if isPooFirst
-    box.new(left=time, right=time + boxWidthMs, top=highestHigh, bottom=lowestLow, xloc=xloc.bar_time, border_color=color.new(purnimaColor, 80), bgcolor=purnimaBgColor)
+    box.new(left=time, right=time + boxWidthMs, top=chart.info.price_max, bottom=chart.info.price_min, xloc=xloc.bar_time, border_color=color.new(purnimaColor, 80), bgcolor=purnimaBgColor)
     if showEventBeginLabels
         label.new(x=time, y=f_y_pos(purnimaLabelPos, false), xloc=xloc.bar_time, yloc=yloc.price, text=showEmojis ? "🌕 Purnima begins" : "Purnima begins", style=label.style_label_left, color=purnimaColor, textcolor=color.white)
 f_draw_event(_time, _label, _emoji, _color, _pos, _isFirst) =>
     if _isFirst
-        line.new(x1=_time, y1=highestHigh, x2=_time, y2=lowestLow, xloc=xloc.bar_time, color=_color, style=line.style_dotted)
+        line.new(x1=_time, y1=chart.info.price_max, x2=_time, y2=chart.info.price_min, xloc=xloc.bar_time, color=_color, style=line.style_dotted)
         is_top = _pos == "top"
         _y = f_y_pos(_pos, is_top)
         _labstyle = is_top ? label.style_label_down : label.style_label_up
