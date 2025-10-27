@@ -1,0 +1,164 @@
+//@version=6
+indicator("Lunar Cycle Highlights", overlay=true, max_lines_count=500, max_labels_count=500)
+var G_LUNAR = "Lunar Events"
+showAmavasya = input.bool(true, "Show Amavasya 🌑", group = G_LUNAR, inline = "lunar")
+showPurnima = input.bool(true, "Show Purnima 🌕", group = G_LUNAR, inline = "lunar")
+showEmojis = input.bool(true, "Show Emojis in Labels", group = G_LUNAR)
+showEventBeginLabels = input.bool(false, "Show '... begins' Labels", tooltip="Shows a label for the exact start of the event. The main labels still appear.", group=G_LUNAR)
+var G_AMAVASYA = "Amavasya Display"
+amavasyaLabelPos = input.string("top", "Label Position", options=["top", "bottom"], group = G_AMAVASYA)
+amavasyaColor = input.color(color.new(color.red, 0), "Color", group = G_AMAVASYA)
+var G_PURNIMA = "Purnima Display"
+purnimaColor = input.color(color.new(color.green, 0), "Color", group = G_PURNIMA)
+var G_PANEL = "Info Panel"
+showInfoPanel = input.bool(true, "Show Phase Info Panel", group = G_PANEL)
+panelPosition = input.string("bottom-right", "Panel Position", options=["bottom-left", "top-right", "bottom-right"], group = G_PANEL)
+var G_VWAP = "VWAP"
+showVWAP = input.bool(true, "Show VWAP", group = G_VWAP)
+vwapColor = input.color(color.new(color.blue, 0), "VWAP Color", group = G_VWAP)
+vwapWidth = input.int(2, "VWAP Line Width", minval=1, maxval=5, group = G_VWAP)
+showSmoothedVWAP = input.bool(true, "Show Smoothed VWAP", group = G_VWAP)
+smoothedVWAPLength = input.int(10, "Smoothed VWAP Length", minval=1, group = G_VWAP)
+smoothedVWAPColor = input.color(color.new(color.orange, 0), "Smoothed VWAP Color", group = G_VWAP)
+var G_SIGNALS = "Crossover Signals"
+showCrossoverSignals = input.bool(true, "Show Crossover Signals", group = G_SIGNALS)
+buySignalColor = input.color(color.new(color.green, 0), "Buy Signal Color", group = G_SIGNALS)
+sellSignalColor = input.color(color.new(color.red, 0), "Sell Signal Color", group = G_SIGNALS)
+var G_BG = "Background Coloring"
+bullishColor = input.color(color.new(color.green, 90), "Bullish Color", group = G_BG)
+bearishColor = input.color(color.new(color.red, 90), "Bearish Color", group = G_BG)
+
+var G_PDHL = "Previous Day High/Low"
+showPDHL = input.bool(true, "Show Previous Day High/Low", group = G_PDHL)
+pdhColor = input.color(color.new(color.orange, 0), "High Color", group = G_PDHL)
+pdlColor = input.color(color.new(color.purple, 0), "Low Color", group = G_PDHL)
+pdhlWidth = input.int(1, "Line Width", minval=1, maxval=5, group = G_PDHL)
+pdhlStyle = input.string("Dashed", "Line Style", options=["Solid", "Dotted", "Dashed"], group = G_PDHL)
+
+var amavasyaDates = array.from(timestamp("Asia/Kolkata", 2024, 1, 11, 5, 57), timestamp("Asia/Kolkata", 2024, 2, 9, 16, 0), timestamp("Asia/Kolkata", 2024, 3, 10, 14, 1), timestamp("Asia/Kolkata", 2024, 4, 8, 23, 19), timestamp("Asia/Kolkata", 2024, 5, 8, 8, 57), timestamp("Asia/Kolkata", 2024, 6, 6, 17, 38), timestamp("Asia/Kolkata", 2024, 7, 6, 6, 0), timestamp("Asia/Kolkata", 2024, 8, 4, 19, 14), timestamp("Asia/Kolkata", 2024, 9, 3, 9, 26), timestamp("Asia/Kolkata", 2024, 10, 2, 23, 25), timestamp("Asia/Kolkata", 2024, 11, 1, 12, 3), timestamp("Asia/Kolkata", 2024, 12, 1, 0, 32), timestamp("Asia/Kolkata", 2025, 1, 29, 9, 54), timestamp("Asia/Kolkata", 2025, 2, 28, 15, 5), timestamp("Asia/Kolkata", 2025, 3, 29, 18, 43), timestamp("Asia/Kolkata", 2025, 4, 28, 22, 20), timestamp("Asia/Kolkata", 2025, 5, 28, 2, 37), timestamp("Asia/Kolkata", 2025, 6, 26, 8, 1), timestamp("Asia/Kolkata", 2025, 7, 25, 15, 12), timestamp("Asia/Kolkata", 2025, 8, 24, 1, 51), timestamp("Asia/Kolkata", 2025, 9, 22, 16, 1), timestamp("Asia/Kolkata", 2025, 10, 22, 8, 25), timestamp("Asia/Kolkata", 2025, 11, 21, 3, 30), timestamp("Asia/Kolkata", 2025, 12, 20, 22, 20), timestamp("Asia/Kolkata", 2026, 1, 19, 15, 8), timestamp("Asia/Kolkata", 2026, 2, 18, 4, 39), timestamp("Asia/Kolkata", 2026, 3, 19, 14, 57), timestamp("Asia/Kolkata", 2026, 4, 17, 23, 13), timestamp("Asia/Kolkata", 2026, 5, 17, 6, 3), timestamp("Asia/Kolkata", 2026, 6, 15, 13, 28), timestamp("Asia/Kolkata", 2026, 7, 14, 22, 21), timestamp("Asia/Kolkata", 2026, 8, 13, 9, 13), timestamp("Asia/Kolkata", 2026, 9, 11, 22, 9), timestamp("Asia/Kolkata", 2026, 10, 11, 13, 1), timestamp("Asia/Kolkata", 2026, 11, 10, 8, 0), timestamp("Asia/Kolkata", 2026, 12, 10, 4, 28))
+var purnimaDates = array.from(timestamp("Asia/Kolkata", 2024, 1, 25, 5, 54), timestamp("Asia/Kolkata", 2024, 2, 24, 18, 39), timestamp("Asia/Kolkata", 2024, 3, 25, 12, 3), timestamp("Asia/Kolkata", 2024, 4, 24, 8, 17), timestamp("Asia/Kolkata", 2024, 5, 23, 6, 47), timestamp("Asia/Kolkata", 2024, 6, 22, 7, 8), timestamp("Asia/Kolkata", 2024, 7, 21, 9, 38), timestamp("Asia/Kolkata", 2024, 8, 19, 14, 0), timestamp("Asia/Kolkata", 2024, 9, 18, 20, 34), timestamp("Asia/Kolkata", 2024, 10, 17, 5, 19), timestamp("Asia/Kolkata", 2024, 11, 15, 16, 17), timestamp("Asia/Kolkata", 2024, 12, 15, 5, 15), timestamp("Asia/Kolkata", 2025, 1, 13, 19, 24), timestamp("Asia/Kolkata", 2025, 2, 12, 9, 49), timestamp("Asia/Kolkata", 2025, 3, 13, 23, 39), timestamp("Asia/Kolkata", 2025, 4, 12, 11, 33), timestamp("Asia/Kolkata", 2025, 5, 12, 21, 14), timestamp("Asia/Kolkata", 2025, 6, 11, 5, 13), timestamp("Asia/Kolkata", 2025, 7, 10, 12, 23), timestamp("Asia/Kolkata", 2025, 8, 8, 19, 19), timestamp("Asia/Kolkata", 2025, 9, 7, 3, 5), timestamp("Asia/Kolkata", 2025, 10, 6, 12, 4), timestamp("Asia/Kolkata", 2025, 11, 4, 23, 21), timestamp("Asia/Kolkata", 2025, 12, 4, 13, 0), timestamp("Asia/Kolkata", 2026, 1, 3, 4, 14), timestamp("Asia/Kolkata", 2026, 2, 1, 20, 3), timestamp("Asia/Kolkata", 2026, 3, 3, 10, 34), timestamp("Asia/Kolkata", 2026, 4, 2, 0, 15), timestamp("Asia/Kolkata", 2026, 5, 1, 11, 22), timestamp("Asia/Kolkata", 2026, 5, 30, 20, 55), timestamp("Asia/Kolkata", 2026, 6, 29, 5, 6), timestamp("Asia/Kolkata", 2026, 7, 28, 12, 32), timestamp("Asia/Kolkata", 2026, 8, 26, 20, 9), timestamp("Asia/Kolkata", 2026, 9, 25, 4, 49), timestamp("Asia/Kolkata", 2026, 10, 24, 15, 7), timestamp("Asia/Kolkata", 2026, 11, 23, 3, 27), timestamp("Asia/Kolkata", 2026, 12, 22, 17, 7))
+f_is_event_start(date_array, array_idx_var) =>
+    is_first = false
+    current_idx = array_idx_var
+    if array.size(date_array) > current_idx
+        event_time = array.get(date_array, current_idx)
+        if time >= event_time and nz(time[1]) < event_time
+            is_first := true
+            current_idx += 1
+    [is_first, current_idx]
+var ama_idx = 0
+var poo_idx = 0
+isAmaFirst = false
+isPooFirst = false
+if showAmavasya
+    [isAmaFirst_val, ama_idx_val] = f_is_event_start(amavasyaDates, ama_idx)
+    isAmaFirst := isAmaFirst_val
+    ama_idx := ama_idx_val
+if showPurnima
+    [isPooFirst_val, poo_idx_val] = f_is_event_start(purnimaDates, poo_idx)
+    isPooFirst := isPooFirst_val
+    poo_idx := poo_idx_val
+lookback = 5000
+highestHigh = ta.highest(high, lookback)
+lowestLow = ta.lowest(low, lookback)
+atr = ta.atr(14)
+f_y_pos(pos_str) =>
+    base = pos_str == "top" ? highestHigh : lowestLow
+    mult = pos_str == "top" ? 1 : -1
+    base + mult * atr
+f_draw_event(_time, _label, _emoji, _color, _pos, _isFirst) =>
+    if _isFirst
+        line.new(x1=_time, y1=highestHigh, x2=_time, y2=lowestLow, xloc=xloc.bar_time, color=_color, style=line.style_dotted)
+        _y = f_y_pos(_pos)
+        _labstyle = _pos == "top" ? label.style_label_down : label.style_label_up
+        _emojiText = showEmojis ? " " + _emoji : ""
+        label.new(x=_time, y=_y, text=_label + _emojiText, xloc=xloc.bar_time, yloc=yloc.price, style=_labstyle, color=_color, textcolor=color.white)
+f_draw_event(time, "Amavasya", "🌑", amavasyaColor, amavasyaLabelPos, isAmaFirst)
+f_draw_event(time, "Purnima", "🌕", purnimaColor, "top", isPooFirst)
+var int lastP_time = na
+var int lastA_time = na
+if isPooFirst
+    lastP_time := array.get(purnimaDates, poo_idx - 1)
+if isAmaFirst
+    lastA_time := array.get(amavasyaDates, ama_idx - 1)
+inBullish = nz(lastP_time, 0) > nz(lastA_time, 0)
+vwapValue = ta.vwap(hlc3)
+smoothedVWAPValue = ta.ema(vwapValue, smoothedVWAPLength)
+plot(showVWAP ? vwapValue : na, "VWAP", color=vwapColor, linewidth=vwapWidth)
+plot(showSmoothedVWAP ? smoothedVWAPValue : na, "Smoothed VWAP", color=smoothedVWAPColor, linewidth=vwapWidth)
+buySignal = ta.crossover(close, smoothedVWAPValue) and inBullish
+sellSignal = ta.crossunder(close, smoothedVWAPValue) and not inBullish
+plotshape(showCrossoverSignals and buySignal, style=shape.triangleup, location=location.belowbar, color=buySignalColor, size=size.small)
+plotshape(showCrossoverSignals and sellSignal, style=shape.triangledown, location=location.abovebar, color=sellSignalColor, size=size.small)
+
+alertcondition(buySignal, title="Buy Signal", message="VWAP Crossover Buy Signal")
+alertcondition(sellSignal, title="Sell Signal", message="VWAP Crossover Sell Signal")
+
+// -----------------------------------------------------------------------------
+// === Amavasya Breakout Section ===
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
+// === Previous Day High/Low Section ===
+// -----------------------------------------------------------------------------
+[pdh, pdl] = request.security(syminfo.tickerid, "D", [high[1], low[1]])
+
+var line pdhLine = line.new(na, na, na, na)
+var line pdlLine = line.new(na, na, na, na)
+
+if ta.change(time("D")) != 0 and not na(pdh)
+    line.set_xy1(pdhLine, bar_index, pdh)
+    line.set_xy2(pdhLine, bar_index + 1, pdh)
+
+    line.set_xy1(pdlLine, bar_index, pdl)
+    line.set_xy2(pdlLine, bar_index + 1, pdl)
+
+if showPDHL
+    lineStyle = pdhlStyle == "Solid" ? line.style_solid : pdhlStyle == "Dotted" ? line.style_dotted : line.style_dashed
+    line.set_extend(pdhLine, extend.right)
+    line.set_color(pdhLine, pdhColor)
+    line.set_width(pdhLine, pdhlWidth)
+    line.set_style(pdhLine, lineStyle)
+
+    line.set_extend(pdlLine, extend.right)
+    line.set_color(pdlLine, pdlColor)
+    line.set_width(pdlLine, pdhlWidth)
+    line.set_style(pdlLine, lineStyle)
+else
+    line.set_extend(pdhLine, extend.none)
+    line.set_extend(pdlLine, extend.none)
+
+
+bgcolor(inBullish ? bullishColor : bearishColor)
+var label infoPanel = na
+var label phaseLabel = na
+f_next_event_time(date_array, idx) =>
+    idx < array.size(date_array) ? array.get(date_array, idx) : na
+fmtDate(_t) => na(_t) ? "N/A" : str.format("{0,date,dd MMM yyyy HH:mm}", _t)
+if showInfoPanel and barstate.islast
+    nextAma = f_next_event_time(amavasyaDates, ama_idx)
+    nextPoo = f_next_event_time(purnimaDates, poo_idx)
+    nextText = ""
+    if na(nextAma) and na(nextPoo)
+        nextText := "No future events in data"
+    else if na(nextPoo) or (nextAma < nextPoo)
+        nextText := "Next Amavasya: " + fmtDate(nextAma)
+    else
+        nextText := "Next Purnima: " + fmtDate(nextPoo)
+    phaseName = inBullish ? "Purnima → Amavasya (Bullish half)" : "Amavasya → Purnima (Bearish half)"
+    panelText = "Phase: " + phaseName + "\n" + nextText
+    if not na(infoPanel)
+        label.delete(infoPanel)
+    if not na(phaseLabel)
+        label.delete(phaseLabel)
+    if panelPosition == "bottom-left"
+        infoPanel := label.new(x=bar_index, y=lowestLow, xloc=xloc.bar_index, yloc=yloc.price, text=panelText,style=label.style_label_left, color=color.new(color.gray, 0), textcolor=color.white)
+    else if panelPosition == "top-right"
+        infoPanel := label.new(x=bar_index, y=highestHigh, xloc=xloc.bar_index, yloc=yloc.price, text=panelText,style=label.style_label_right, color=color.new(color.gray, 0), textcolor=color.white)
+    else if panelPosition == "bottom-right"
+        infoPanel := label.new(x=bar_index, y=lowestLow, xloc=xloc.bar_index, yloc=yloc.price, text=panelText,style=label.style_label_right, color=color.new(color.gray, 0), textcolor=color.white)
+    dotText = inBullish ? "🟢" : "🔴"
+    if panelPosition == "bottom-left"
+        phaseLabel := label.new(x=bar_index - math.min(40, bar_index), y=lowestLow * 0.98, xloc=xloc.bar_index, yloc=yloc.price,text=dotText, style=label.style_label_left, color=inBullish ? color.new(color.green, 0) : color.new(color.red, 0), textcolor=color.white)
+    else if panelPosition == "bottom-right"
+        phaseLabel := label.new(x=bar_index, y=lowestLow * 0.98, xloc=xloc.bar_index, yloc=yloc.price,text=dotText, style=label.style_label_right, color=inBullish ? color.new(color.green, 0) : color.new(color.red, 0), textcolor=color.white)
