@@ -1,0 +1,526 @@
+//@version=5
+indicator("Moon Mars Conjunction", overlay=true)
+
+// Hardcoded conjunction dates and times (IST)
+// Conjunction times are peak times, so we'll create a 24-hour window (12 hours before and 12 hours after)
+// All times are in UTC.
+
+// NSE Holidays for 2023
+var int[] nseHolidays2023 = array.new_int()
+if barstate.isfirst
+    array.push(nseHolidays2023, timestamp(2023, 1, 26, 0, 0))
+    array.push(nseHolidays2023, timestamp(2023, 3, 7, 0, 0))
+    array.push(nseHolidays2023, timestamp(2023, 3, 30, 0, 0))
+    array.push(nseHolidays2023, timestamp(2023, 4, 4, 0, 0))
+    array.push(nseHolidays2023, timestamp(2023, 4, 7, 0, 0))
+    array.push(nseHolidays2023, timestamp(2023, 4, 14, 0, 0))
+    array.push(nseHolidays2023, timestamp(2023, 5, 1, 0, 0))
+    array.push(nseHolidays2023, timestamp(2023, 6, 28, 0, 0))
+    array.push(nseHolidays2023, timestamp(2023, 8, 15, 0, 0))
+    array.push(nseHolidays2023, timestamp(2023, 9, 19, 0, 0))
+    array.push(nseHolidays2023, timestamp(2023, 10, 2, 0, 0))
+    array.push(nseHolidays2023, timestamp(2023, 10, 24, 0, 0))
+    array.push(nseHolidays2023, timestamp(2023, 11, 14, 0, 0))
+    array.push(nseHolidays2023, timestamp(2023, 11, 27, 0, 0))
+    array.push(nseHolidays2023, timestamp(2023, 12, 25, 0, 0))
+
+// NSE Holidays for 2024
+var int[] nseHolidays2024 = array.new_int()
+if barstate.isfirst
+    array.push(nseHolidays2024, timestamp(2024, 1, 22, 0, 0))
+    array.push(nseHolidays2024, timestamp(2024, 1, 26, 0, 0))
+    array.push(nseHolidays2024, timestamp(2024, 3, 8, 0, 0))
+    array.push(nseHolidays2024, timestamp(2024, 3, 25, 0, 0))
+    array.push(nseHolidays2024, timestamp(2024, 3, 29, 0, 0))
+    array.push(nseHolidays2024, timestamp(2024, 4, 11, 0, 0))
+    array.push(nseHolidays2024, timestamp(2024, 4, 17, 0, 0))
+    array.push(nseHolidays2024, timestamp(2024, 5, 1, 0, 0))
+    array.push(nseHolidays2024, timestamp(2024, 6, 17, 0, 0))
+    array.push(nseHolidays2024, timestamp(2024, 7, 17, 0, 0))
+    array.push(nseHolidays2024, timestamp(2024, 8, 15, 0, 0))
+    array.push(nseHolidays2024, timestamp(2024, 10, 2, 0, 0))
+    array.push(nseHolidays2024, timestamp(2024, 11, 1, 0, 0))
+    array.push(nseHolidays2024, timestamp(2024, 11, 15, 0, 0))
+    array.push(nseHolidays2024, timestamp(2024, 12, 25, 0, 0))
+
+// NSE Holidays for 2025
+var int[] nseHolidays2025 = array.new_int()
+if barstate.isfirst
+    array.push(nseHolidays2025, timestamp(2025, 2, 26, 0, 0))   // Mahashivratri
+    array.push(nseHolidays2025, timestamp(2025, 3, 14, 0, 0))   // Holi
+    array.push(nseHolidays2025, timestamp(2025, 3, 31, 0, 0))   // Eid-Ul-Fitr
+    array.push(nseHolidays2025, timestamp(2025, 4, 10, 0, 0))   // Shri Mahavir Jayanti
+    array.push(nseHolidays2025, timestamp(2025, 4, 14, 0, 0))   // Dr. Baba Saheb Ambedkar Jayanti
+    array.push(nseHolidays2025, timestamp(2025, 4, 18, 0, 0))   // Good Friday
+    array.push(nseHolidays2025, timestamp(2025, 5, 1, 0, 0))    // Maharashtra Day
+    array.push(nseHolidays2025, timestamp(2025, 8, 15, 0, 0))   // Independence Day
+    array.push(nseHolidays2025, timestamp(2025, 8, 27, 0, 0))   // Ganesh Chaturthi
+    array.push(nseHolidays2025, timestamp(2025, 10, 2, 0, 0))   // Mahatma Gandhi Jayanti/Dussehra
+    array.push(nseHolidays2025, timestamp(2025, 10, 21, 0, 0))  // Diwali Laxmi Pujan
+    array.push(nseHolidays2025, timestamp(2025, 10, 22, 0, 0))  // Diwali-Balipratipada
+    array.push(nseHolidays2025, timestamp(2025, 11, 5, 0, 0))   // Guru Nanak Jayanti
+    array.push(nseHolidays2025, timestamp(2025, 12, 25, 0, 0))  // Christmas
+
+// NSE Holidays for 2026
+var int[] nseHolidays2026 = array.new_int()
+if barstate.isfirst
+    array.push(nseHolidays2026, timestamp(2026, 1, 26, 0, 0))
+    array.push(nseHolidays2026, timestamp(2026, 2, 16, 0, 0))
+    array.push(nseHolidays2026, timestamp(2026, 3, 3, 0, 0))
+    array.push(nseHolidays2026, timestamp(2026, 3, 20, 0, 0))
+    array.push(nseHolidays2026, timestamp(2026, 3, 27, 0, 0))
+    array.push(nseHolidays2026, timestamp(2026, 3, 31, 0, 0))
+    array.push(nseHolidays2026, timestamp(2026, 4, 3, 0, 0))
+    array.push(nseHolidays2026, timestamp(2026, 4, 14, 0, 0))
+    array.push(nseHolidays2026, timestamp(2026, 5, 1, 0, 0))
+    array.push(nseHolidays2026, timestamp(2026, 8, 15, 0, 0))
+    array.push(nseHolidays2026, timestamp(2026, 10, 2, 0, 0))
+    array.push(nseHolidays2026, timestamp(2026, 10, 20, 0, 0))
+    array.push(nseHolidays2026, timestamp(2026, 11, 4, 0, 0))
+    array.push(nseHolidays2026, timestamp(2026, 12, 25, 0, 0))
+
+// TODO: Add NSE holiday list for 2027 when it becomes available.
+
+// Conjunction Dates
+var int[] conjunctionStartTimes = array.new_int()
+var int[] conjunctionEndTimes = array.new_int()
+
+if barstate.isfirst
+    // 2023
+    array.push(conjunctionStartTimes, timestamp(2023, 1, 30, 9, 56))
+    array.push(conjunctionEndTimes, timestamp(2023, 1, 31, 9, 56))
+    array.push(conjunctionStartTimes, timestamp(2023, 2, 27, 18, 9))
+    array.push(conjunctionEndTimes, timestamp(2023, 2, 28, 18, 9))
+    array.push(conjunctionStartTimes, timestamp(2023, 3, 27, 19, 46))
+    array.push(conjunctionEndTimes, timestamp(2023, 3, 28, 19, 46))
+    array.push(conjunctionStartTimes, timestamp(2023, 4, 25, 12, 47))
+    array.push(conjunctionEndTimes, timestamp(2023, 4, 26, 12, 47))
+    array.push(conjunctionStartTimes, timestamp(2023, 5, 24, 5, 52))
+    array.push(conjunctionEndTimes, timestamp(2023, 5, 25, 5, 52))
+    array.push(conjunctionStartTimes, timestamp(2023, 6, 21, 20, 24))
+    array.push(conjunctionEndTimes, timestamp(2023, 6, 22, 20, 24))
+    array.push(conjunctionStartTimes, timestamp(2023, 7, 20, 6, 31))
+    array.push(conjunctionEndTimes, timestamp(2023, 7, 21, 6, 31))
+    array.push(conjunctionStartTimes, timestamp(2023, 8, 17, 11, 57))
+    array.push(conjunctionEndTimes, timestamp(2023, 8, 18, 11, 57))
+    array.push(conjunctionStartTimes, timestamp(2023, 9, 14, 17, 53))
+    array.push(conjunctionEndTimes, timestamp(2023, 9, 15, 17, 53))
+    array.push(conjunctionStartTimes, timestamp(2023, 10, 13, 1, 45))
+    array.push(conjunctionEndTimes, timestamp(2023, 10, 14, 1, 45))
+    array.push(conjunctionStartTimes, timestamp(2023, 11, 10, 12, 11))
+    array.push(conjunctionEndTimes, timestamp(2023, 11, 11, 12, 11))
+    array.push(conjunctionStartTimes, timestamp(2023, 12, 9, 2, 5))
+    array.push(conjunctionEndTimes, timestamp(2023, 12, 10, 2, 5))
+
+    // 2024
+    array.push(conjunctionStartTimes, timestamp(2024, 1, 9, 12, 30))
+    array.push(conjunctionEndTimes, timestamp(2024, 1, 10, 12, 30))
+    array.push(conjunctionStartTimes, timestamp(2024, 2, 7, 12, 30))
+    array.push(conjunctionEndTimes, timestamp(2024, 2, 8, 12, 30))
+    array.push(conjunctionStartTimes, timestamp(2024, 3, 7, 12, 30))
+    array.push(conjunctionEndTimes, timestamp(2024, 3, 8, 12, 30))
+    array.push(conjunctionStartTimes, timestamp(2024, 4, 5, 12, 30))
+    array.push(conjunctionEndTimes, timestamp(2024, 4, 6, 12, 30))
+    array.push(conjunctionStartTimes, timestamp(2024, 5, 4, 12, 30))
+    array.push(conjunctionEndTimes, timestamp(2024, 5, 5, 12, 30))
+    array.push(conjunctionStartTimes, timestamp(2024, 6, 2, 12, 30))
+    array.push(conjunctionEndTimes, timestamp(2024, 6, 3, 12, 30))
+    array.push(conjunctionStartTimes, timestamp(2024, 6, 30, 12, 30))
+    array.push(conjunctionEndTimes, timestamp(2024, 7, 1, 12, 30))
+    array.push(conjunctionStartTimes, timestamp(2024, 7, 29, 12, 30))
+    array.push(conjunctionEndTimes, timestamp(2024, 7, 30, 12, 30))
+    array.push(conjunctionStartTimes, timestamp(2024, 8, 27, 12, 30))
+    array.push(conjunctionEndTimes, timestamp(2024, 8, 28, 12, 30))
+    array.push(conjunctionStartTimes, timestamp(2024, 9, 24, 12, 30))
+    array.push(conjunctionEndTimes, timestamp(2024, 9, 25, 12, 30))
+    array.push(conjunctionStartTimes, timestamp(2024, 10, 22, 12, 30))
+    array.push(conjunctionEndTimes, timestamp(2024, 10, 23, 12, 30))
+    array.push(conjunctionStartTimes, timestamp(2024, 11, 19, 12, 30))
+    array.push(conjunctionEndTimes, timestamp(2024, 11, 20, 12, 30))
+    array.push(conjunctionStartTimes, timestamp(2024, 12, 17, 12, 30))
+    array.push(conjunctionEndTimes, timestamp(2024, 12, 18, 12, 30))
+
+    // 2025
+    // January 14, 2025, 09:12
+    array.push(conjunctionStartTimes, timestamp(2025, 01, 13, 15, 42))
+    array.push(conjunctionEndTimes, timestamp(2025, 01, 14, 15, 42))
+
+    // February 10, 2025, 01:06
+    array.push(conjunctionStartTimes, timestamp(2025, 02, 9, 07, 36))
+    array.push(conjunctionEndTimes, timestamp(2025, 02, 10, 07, 36))
+
+    // March 9, 2025, 05:57
+    array.push(conjunctionStartTimes, timestamp(2025, 03, 8, 12, 27))
+    array.push(conjunctionEndTimes, timestamp(2025, 03, 9, 12, 27))
+
+    // April 6, 2025, 00:34
+    array.push(conjunctionStartTimes, timestamp(2025, 04, 5, 07, 04))
+    array.push(conjunctionEndTimes, timestamp(2025, 04, 6, 07, 04))
+
+    // May 4, 2025, 04:42
+    array.push(conjunctionStartTimes, timestamp(2025, 05, 3, 11, 12))
+    array.push(conjunctionEndTimes, timestamp(2025, 05, 4, 11, 12))
+
+    // June 1, 2025, 15:19
+    array.push(conjunctionStartTimes, timestamp(2025, 05, 31, 21, 49))
+    array.push(conjunctionEndTimes, timestamp(2025, 06, 1, 21, 49))
+
+    // June 30, 2025, 06:35
+    array.push(conjunctionStartTimes, timestamp(2025, 06, 29, 13, 05))
+    array.push(conjunctionEndTimes, timestamp(2025, 06, 30, 13, 05))
+
+    // July 29, 2025, 01:15
+    array.push(conjunctionStartTimes, timestamp(2025, 07, 28, 07, 45))
+    array.push(conjunctionEndTimes, timestamp(2025, 07, 29, 07, 45))
+
+    // August 26, 2025, 22:11
+    array.push(conjunctionStartTimes, timestamp(2025, 8, 26, 04, 41))
+    array.push(conjunctionEndTimes, timestamp(2025, 8, 27, 04, 41))
+
+    // September 24, 2025, 20:20
+    array.push(conjunctionStartTimes, timestamp(2025, 9, 24, 02, 50))
+    array.push(conjunctionEndTimes, timestamp(2025, 9, 25, 02, 50))
+
+    // 2026
+    // March 18, 2026, 03:21
+    array.push(conjunctionStartTimes, timestamp(2026, 03, 17, 9, 51))
+    array.push(conjunctionEndTimes, timestamp(2026, 03, 18, 9, 51))
+
+    // April 16, 2026, 06:15
+    array.push(conjunctionStartTimes, timestamp(2026, 04, 15, 12, 45))
+    array.push(conjunctionEndTimes, timestamp(2026, 04, 16, 12, 45))
+
+    // August 9, 2026, 11:01
+    array.push(conjunctionStartTimes, timestamp(2026, 8, 8, 17, 31))
+    array.push(conjunctionEndTimes, timestamp(2026, 8, 9, 17, 31))
+
+    // September 6, 2026, 23:54
+    array.push(conjunctionStartTimes, timestamp(2026, 9, 6, 06, 24))
+    array.push(conjunctionEndTimes, timestamp(2026, 9, 7, 06, 24))
+
+    // October 5, 2026, 11:00
+    array.push(conjunctionStartTimes, timestamp(2026, 10, 4, 17, 30))
+    array.push(conjunctionEndTimes, timestamp(2026, 10, 5, 17, 30))
+
+    // November 2, 2026, 19:53
+    array.push(conjunctionStartTimes, timestamp(2026, 11, 2, 02, 23))
+    array.push(conjunctionEndTimes, timestamp(2026, 11, 3, 02, 23))
+
+    // December 1, 2026, 01:02
+    array.push(conjunctionStartTimes, timestamp(2026, 11, 30, 07, 32))
+    array.push(conjunctionEndTimes, timestamp(2026, 12, 1, 07, 32))
+
+    // 2027
+    // March 20, 2027, 00:03
+    array.push(conjunctionStartTimes, timestamp(2027, 03, 19, 6, 33))
+    array.push(conjunctionEndTimes, timestamp(2027, 03, 20, 6, 33))
+
+    // April 16, 2027, 06:30
+    array.push(conjunctionStartTimes, timestamp(2027, 04, 15, 13, 00))
+    array.push(conjunctionEndTimes, timestamp(2027, 04, 16, 13, 00))
+
+    // May 14, 2027, 01:04
+    array.push(conjunctionStartTimes, timestamp(2027, 05, 13, 7, 34))
+    array.push(conjunctionEndTimes, timestamp(2027, 05, 14, 7, 34))
+
+    // June 11, 2027, 04:15
+    array.push(conjunctionStartTimes, timestamp(2027, 06, 10, 10, 45))
+    array.push(conjunctionEndTimes, timestamp(2027, 06, 11, 10, 45))
+
+    // July 9, 2027, 13:22
+    array.push(conjunctionStartTimes, timestamp(2027, 07, 8, 19, 52))
+    array.push(conjunctionEndTimes, timestamp(2027, 07, 9, 19, 52))
+
+    // October 3, 2027, 14:28
+    array.push(conjunctionStartTimes, timestamp(2027, 10, 2, 20, 58))
+    array.push(conjunctionEndTimes, timestamp(2027, 10, 3, 20, 58))
+
+    // November 1, 2027, 12:23
+    array.push(conjunctionStartTimes, timestamp(2027, 10, 31, 18, 53))
+    array.push(conjunctionEndTimes, timestamp(2027, 11, 1, 18, 53))
+
+    // November 30, 2027, 13:23
+    array.push(conjunctionStartTimes, timestamp(2027, 11, 29, 19, 53))
+    array.push(conjunctionEndTimes, timestamp(2027, 11, 30, 19, 53))
+
+    // December 29, 2027, 17:40
+    array.push(conjunctionStartTimes, timestamp(2027, 12, 29, 00, 10))
+    array.push(conjunctionEndTimes, timestamp(2027, 12, 30, 00, 10))
+
+// Amavasya Dates (UTC)
+var int[] amavasyaStartTimes = array.new_int()
+var int[] amavasyaEndTimes = array.new_int()
+
+// Pre-calculated, shifted event times
+var int[] shiftedConjunctionStartTimes = array.new_int()
+var int[] shiftedConjunctionEndTimes = array.new_int()
+var int[] shiftedAmavasyaStartTimes = array.new_int()
+var int[] shiftedAmavasyaEndTimes = array.new_int()
+
+// Function to check if a given timestamp is a weekend or holiday
+isTradingDay(t) =>
+    // Check for weekend (Saturday=7, Sunday=1 in Pine Script)
+    isWeekend = dayofweek(t, "Asia/Kolkata") == dayofweek.saturday or dayofweek(t, "Asia/Kolkata") == dayofweek.sunday
+
+    // Check for holiday
+    isHoliday = false
+    currentYear = year(t, "Asia/Kolkata")
+
+    holidayList = nseHolidays2023
+    if currentYear == 2024
+        holidayList := nseHolidays2024
+    else if currentYear == 2025
+        holidayList := nseHolidays2025
+    else if currentYear == 2026
+        holidayList := nseHolidays2026
+
+    for i = 0 to array.size(holidayList) - 1
+        holidayTimestamp = array.get(holidayList, i)
+        // Compare year, month, and day
+        if year(t, "Asia/Kolkata") == year(holidayTimestamp, "Asia/Kolkata") and month(t, "Asia/Kolkata") == month(holidayTimestamp, "Asia/Kolkata") and dayofmonth(t, "Asia/Kolkata") == dayofmonth(holidayTimestamp, "Asia/Kolkata")
+            isHoliday := true
+            break
+
+    not isWeekend and not isHoliday
+
+// Function to find the next trading day
+getNextTradingDay(t) =>
+    nextDay = t
+    while not isTradingDay(nextDay)
+        // Increment by one day (in seconds)
+        nextDay := nextDay + 24 * 60 * 60 * 1000
+    nextDay
+
+if barstate.isfirst
+    // 2023
+    array.push(amavasyaStartTimes, timestamp(2023, 1, 21, 14, 47))
+    array.push(amavasyaEndTimes, timestamp(2023, 1, 22, 11, 10))
+    array.push(amavasyaStartTimes, timestamp(2023, 2, 19, 14, 52))
+    array.push(amavasyaEndTimes, timestamp(2023, 2, 20, 10, 35))
+    array.push(amavasyaStartTimes, timestamp(2023, 3, 21, 3, 13))
+    array.push(amavasyaEndTimes, timestamp(2023, 3, 22, 0, 23))
+    array.push(amavasyaStartTimes, timestamp(2023, 4, 19, 13, 42))
+    array.push(amavasyaEndTimes, timestamp(2023, 4, 20, 9, 11))
+    array.push(amavasyaStartTimes, timestamp(2023, 5, 19, 1, 43))
+    array.push(amavasyaEndTimes, timestamp(2023, 5, 19, 21, 22))
+    array.push(amavasyaStartTimes, timestamp(2023, 6, 17, 12, 7))
+    array.push(amavasyaEndTimes, timestamp(2023, 6, 18, 7, 47))
+    array.push(amavasyaStartTimes, timestamp(2023, 7, 17, 0, 31))
+    array.push(amavasyaEndTimes, timestamp(2023, 7, 17, 20, 2))
+    array.push(amavasyaStartTimes, timestamp(2023, 8, 15, 11, 35))
+    array.push(amavasyaEndTimes, timestamp(2023, 8, 16, 13, 28))
+    array.push(amavasyaStartTimes, timestamp(2023, 9, 14, 2, 5))
+    array.push(amavasyaEndTimes, timestamp(2023, 9, 15, 4, 23))
+    array.push(amavasyaStartTimes, timestamp(2023, 10, 13, 14, 25))
+    array.push(amavasyaEndTimes, timestamp(2023, 10, 14, 17, 54))
+    array.push(amavasyaStartTimes, timestamp(2023, 11, 12, 5, 17))
+    array.push(amavasyaEndTimes, timestamp(2023, 11, 13, 8, 57))
+    array.push(amavasyaStartTimes, timestamp(2023, 12, 11, 20, 9))
+    array.push(amavasyaEndTimes, timestamp(2023, 12, 12, 23, 2))
+
+    // 2024
+    array.push(amavasyaStartTimes, timestamp(2024, 1, 10, 12, 33))
+    array.push(amavasyaEndTimes, timestamp(2024, 1, 11, 15, 33))
+    array.push(amavasyaStartTimes, timestamp(2024, 2, 9, 4, 29))
+    array.push(amavasyaEndTimes, timestamp(2024, 2, 10, 8, 32))
+    array.push(amavasyaStartTimes, timestamp(2024, 3, 9, 20, 30))
+    array.push(amavasyaEndTimes, timestamp(2024, 3, 10, 23, 1))
+    array.push(amavasyaStartTimes, timestamp(2024, 4, 8, 10, 1))
+    array.push(amavasyaEndTimes, timestamp(2024, 4, 9, 11, 31))
+    array.push(amavasyaStartTimes, timestamp(2024, 5, 7, 21, 21))
+    array.push(amavasyaEndTimes, timestamp(2024, 5, 8, 21, 2))
+    array.push(amavasyaStartTimes, timestamp(2024, 6, 6, 7, 28))
+    array.push(amavasyaEndTimes, timestamp(2024, 6, 7, 5, 38))
+    array.push(amavasyaStartTimes, timestamp(2024, 7, 5, 15, 29))
+    array.push(amavasyaEndTimes, timestamp(2024, 7, 6, 12, 59))
+    array.push(amavasyaStartTimes, timestamp(2024, 8, 3, 22, 22))
+    array.push(amavasyaEndTimes, timestamp(2024, 8, 4, 19, 22))
+    array.push(amavasyaStartTimes, timestamp(2024, 9, 2, 5, 25))
+    array.push(amavasyaEndTimes, timestamp(2024, 9, 3, 3, 55))
+    array.push(amavasyaStartTimes, timestamp(2024, 10, 1, 13, 22))
+    array.push(amavasyaEndTimes, timestamp(2024, 10, 2, 14, 22))
+    array.push(amavasyaStartTimes, timestamp(2024, 10, 30, 23, 18))
+    array.push(amavasyaEndTimes, timestamp(2024, 11, 1, 2, 21))
+    array.push(amavasyaStartTimes, timestamp(2024, 11, 29, 12, 28))
+    array.push(amavasyaEndTimes, timestamp(2024, 11, 30, 15, 28))
+    array.push(amavasyaStartTimes, timestamp(2024, 12, 29, 5, 58))
+    array.push(amavasyaEndTimes, timestamp(2024, 12, 30, 9, 58))
+
+    // 2025
+    array.push(amavasyaStartTimes, timestamp(2025, 1, 28, 14, 05))
+    array.push(amavasyaEndTimes, timestamp(2025, 1, 29, 12, 35))
+    array.push(amavasyaStartTimes, timestamp(2025, 2, 27, 03, 24))
+    array.push(amavasyaEndTimes, timestamp(2025, 2, 28, 00, 44))
+    array.push(amavasyaStartTimes, timestamp(2025, 3, 28, 14, 25))
+    array.push(amavasyaEndTimes, timestamp(2025, 3, 29, 10, 57))
+    array.push(amavasyaStartTimes, timestamp(2025, 4, 26, 23, 19))
+    array.push(amavasyaEndTimes, timestamp(2025, 4, 27, 19, 30))
+    array.push(amavasyaStartTimes, timestamp(2025, 5, 26, 06, 41))
+    array.push(amavasyaEndTimes, timestamp(2025, 5, 27, 03, 01))
+    array.push(amavasyaStartTimes, timestamp(2025, 6, 24, 13, 29))
+    array.push(amavasyaEndTimes, timestamp(2025, 6, 25, 10, 30))
+    array.push(amavasyaStartTimes, timestamp(2025, 7, 23, 20, 58))
+    array.push(amavasyaEndTimes, timestamp(2025, 7, 24, 19, 10))
+    array.push(amavasyaStartTimes, timestamp(2025, 8, 22, 06, 25))
+    array.push(amavasyaEndTimes, timestamp(2025, 8, 23, 06, 05))
+    array.push(amavasyaStartTimes, timestamp(2025, 9, 20, 18, 46))
+    array.push(amavasyaEndTimes, timestamp(2025, 9, 21, 19, 53))
+    array.push(amavasyaStartTimes, timestamp(2025, 10, 20, 10, 14))
+    array.push(amavasyaEndTimes, timestamp(2025, 10, 21, 12, 24))
+    array.push(amavasyaStartTimes, timestamp(2025, 11, 19, 04, 13))
+    array.push(amavasyaEndTimes, timestamp(2025, 11, 20, 06, 46))
+    array.push(amavasyaStartTimes, timestamp(2025, 12, 18, 23, 29))
+    array.push(amavasyaEndTimes, timestamp(2025, 12, 20, 01, 42))
+
+    // 2026
+    array.push(amavasyaStartTimes, timestamp(2026, 1, 17, 18, 33))
+    array.push(amavasyaEndTimes, timestamp(2026, 1, 18, 19, 51))
+    array.push(amavasyaStartTimes, timestamp(2026, 2, 16, 12, 04))
+    array.push(amavasyaEndTimes, timestamp(2026, 2, 17, 12, 00))
+    array.push(amavasyaStartTimes, timestamp(2026, 3, 18, 02, 55))
+    array.push(amavasyaEndTimes, timestamp(2026, 3, 19, 01, 22))
+    array.push(amavasyaStartTimes, timestamp(2026, 4, 16, 14, 41))
+    array.push(amavasyaEndTimes, timestamp(2026, 4, 17, 11, 51))
+    array.push(amavasyaStartTimes, timestamp(2026, 5, 15, 23, 41))
+    array.push(amavasyaEndTimes, timestamp(2026, 5, 16, 20, 00))
+    array.push(amavasyaStartTimes, timestamp(2026, 6, 14, 06, 49))
+    array.push(amavasyaEndTimes, timestamp(2026, 6, 15, 02, 53))
+    array.push(amavasyaStartTimes, timestamp(2026, 7, 13, 13, 19))
+    array.push(amavasyaEndTimes, timestamp(2026, 7, 14, 09, 42))
+    array.push(amavasyaStartTimes, timestamp(2026, 8, 11, 20, 22))
+    array.push(amavasyaEndTimes, timestamp(2026, 8, 12, 17, 36))
+    array.push(amavasyaStartTimes, timestamp(2026, 9, 10, 05, 03))
+    array.push(amavasyaEndTimes, timestamp(2026, 9, 11, 03, 26))
+    array.push(amavasyaStartTimes, timestamp(2026, 10, 9, 16, 05))
+    array.push(amavasyaEndTimes, timestamp(2026, 10, 10, 15, 49))
+    array.push(amavasyaStartTimes, timestamp(2026, 11, 8, 05, 57))
+    array.push(amavasyaEndTimes, timestamp(2026, 11, 9, 07, 01))
+    array.push(amavasyaStartTimes, timestamp(2026, 12, 7, 22, 42))
+    array.push(amavasyaEndTimes, timestamp(2026, 12, 9, 00, 51))
+
+    // 2027
+    array.push(amavasyaStartTimes, timestamp(2027, 1, 6, 17, 43))
+    array.push(amavasyaEndTimes, timestamp(2027, 1, 8, 20, 23))
+    array.push(amavasyaStartTimes, timestamp(2027, 2, 5, 13, 35))
+    array.push(amavasyaEndTimes, timestamp(2027, 2, 6, 15, 55))
+    array.push(amavasyaStartTimes, timestamp(2027, 3, 7, 08, 16))
+    array.push(amavasyaEndTimes, timestamp(2027, 3, 8, 09, 28))
+    array.push(amavasyaStartTimes, timestamp(2027, 4, 6, 00, 10))
+    array.push(amavasyaEndTimes, timestamp(2027, 4, 7, 23, 50))
+    array.push(amavasyaStartTimes, timestamp(2027, 5, 5, 12, 46))
+    array.push(amavasyaEndTimes, timestamp(2027, 5, 6, 10, 57))
+    array.push(amavasyaStartTimes, timestamp(2027, 6, 3, 22, 35))
+    array.push(amavasyaEndTimes, timestamp(2027, 6, 4, 19, 39))
+    array.push(amavasyaStartTimes, timestamp(2027, 7, 3, 06, 35))
+    array.push(amavasyaEndTimes, timestamp(2027, 7, 4, 03, 01))
+    array.push(amavasyaStartTimes, timestamp(2027, 8, 1, 13, 49))
+    array.push(amavasyaEndTimes, timestamp(2027, 8, 2, 10, 04))
+    array.push(amavasyaStartTimes, timestamp(2027, 8, 30, 21, 10))
+    array.push(amavasyaEndTimes, timestamp(2027, 8, 31, 17, 40))
+    array.push(amavasyaStartTimes, timestamp(2027, 9, 29, 05, 24))
+    array.push(amavasyaEndTimes, timestamp(2027, 9, 30, 02, 35))
+    array.push(amavasyaStartTimes, timestamp(2027, 10, 28, 15, 17))
+    array.push(amavasyaEndTimes, timestamp(2027, 10, 29, 13, 35))
+    array.push(amavasyaStartTimes, timestamp(2027, 11, 27, 03, 37))
+    array.push(amavasyaEndTimes, timestamp(2027, 11, 28, 03, 23))
+    array.push(amavasyaStartTimes, timestamp(2027, 12, 26, 18, 52))
+    array.push(amavasyaEndTimes, timestamp(2027, 12, 27, 20, 11))
+
+    // Pre-calculate shifted times once
+    for i = 0 to array.size(conjunctionStartTimes) - 1
+        originalStartTime = array.get(conjunctionStartTimes, i)
+        originalEndTime = array.get(conjunctionEndTimes, i)
+        duration = originalEndTime - originalStartTime
+
+        shiftedStartTime = getNextTradingDay(originalStartTime)
+        shiftedEndTime = shiftedStartTime + duration
+
+        array.push(shiftedConjunctionStartTimes, shiftedStartTime)
+        array.push(shiftedConjunctionEndTimes, shiftedEndTime)
+
+    for i = 0 to array.size(amavasyaStartTimes) - 1
+        originalStartTime = array.get(amavasyaStartTimes, i)
+        originalEndTime = array.get(amavasyaEndTimes, i)
+        duration = originalEndTime - originalStartTime
+
+        shiftedStartTime = getNextTradingDay(originalStartTime)
+        shiftedEndTime = shiftedStartTime + duration
+
+        array.push(shiftedAmavasyaStartTimes, shiftedStartTime)
+        array.push(shiftedAmavasyaEndTimes, shiftedEndTime)
+
+
+// Function to check if a given time is within any conjunction period
+isConjunction(t) =>
+    inConjunction = false
+    for i = 0 to array.size(shiftedConjunctionStartTimes) - 1
+        startTime = array.get(shiftedConjunctionStartTimes, i)
+        endTime = array.get(shiftedConjunctionEndTimes, i)
+        if t >= startTime and t < endTime
+            inConjunction := true
+            break
+    inConjunction
+
+// Function to check if a given time is within any Amavasya period
+isAmavasya(t) =>
+    inAmavasya = false
+    for i = 0 to array.size(shiftedAmavasyaStartTimes) - 1
+        startTime = array.get(shiftedAmavasyaStartTimes, i)
+        endTime = array.get(shiftedAmavasyaEndTimes, i)
+        if t >= startTime and t < endTime
+            inAmavasya := true
+            break
+    inAmavasya
+
+// Determine if the current bar is in a conjunction or Amavasya period
+bool inConjunctionNow = isConjunction(time)
+bool inAmavasyaNow = isAmavasya(time)
+
+// Determine if the previous bar was in a conjunction or Amavasya period
+bool inConjunctionPreviously = isConjunction(time_close[1])
+bool inAmavasyaPreviously = isAmavasya(time_close[1])
+
+// User-configurable options
+showConjunctionHighlights = input.bool(true, title="Show Conjunction Highlights", group="Display Settings")
+conjunctionHighlightColor = input.color(color.new(color.blue, 80), title="Conjunction Highlight Color", group="Display Settings")
+showConjunctionLabels = input.bool(true, title="Show Conjunction Labels", group="Display Settings")
+conjunctionLabelText = input.string("🌕♂️ Moon-Mars\nConjunction", title="Conjunction Label Text", group="Display Settings")
+
+showAmavasyaHighlights = input.bool(true, title="Show Amavasya Highlights", group="Display Settings")
+amavasyaHighlightColor = input.color(color.new(color.orange, 80), title="Amavasya Highlight Color", group="Display Settings")
+showAmavasyaLabels = input.bool(true, title="Show Amavasya Labels", group="Display Settings")
+amavasyaLabelText = input.string("🌑 Amavasya", title="Amavasya Label Text", group="Display Settings")
+
+
+// Add a label and vertical line at the beginning of each conjunction period
+if inConjunctionNow and not inConjunctionPreviously
+    if showConjunctionLabels
+        label.new(bar_index, high, conjunctionLabelText,
+                  color=conjunctionHighlightColor,
+                  textcolor=color.white,
+                  style=label.style_label_down,
+                  yloc=yloc.abovebar,
+                  tooltip="Start of Moon-Mars Conjunction period")
+    if showConjunctionHighlights
+        line.new(bar_index, low, bar_index, high, extend=extend.both, color=conjunctionHighlightColor, width=1)
+
+// Add a label at the beginning of each Amavasya period
+if inAmavasyaNow and not inAmavasyaPreviously and showAmavasyaLabels
+    label.new(bar_index, high, amavasyaLabelText,
+              color=amavasyaHighlightColor,
+              textcolor=color.white,
+              style=label.style_label_down,
+              yloc=yloc.abovebar,
+              tooltip="Start of Amavasya period")
+
+// Highlight the background color during Amavasya periods
+bgcolor(inAmavasyaNow and showAmavasyaHighlights ? amavasyaHighlightColor : na, title="Amavasya Highlight")
+
+
+// Alert for the start of a conjunction period
+if inConjunctionNow and not inConjunctionPreviously
+    alert("Moon-Mars Conjunction period starting now", freq = alert.freq_once_per_bar)
+
+// Alert for the start of an Amavasya period
+if inAmavasyaNow and not inAmavasyaPreviously
+    alert("Amavasya period starting now", freq = alert.freq_once_per_bar)
