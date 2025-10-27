@@ -46,14 +46,16 @@ f_is_event_start(date_array, array_idx_var) =>
     [is_first, current_idx]
 var ama_idx = 0
 var poo_idx = 0
-
 isAmaFirst = false
 isPooFirst = false
-
 if showAmavasya
-    [isAmaFirst, ama_idx] = f_is_event_start(amavasyaDates, ama_idx)
+    [isAmaFirst_val, ama_idx_val] = f_is_event_start(amavasyaDates, ama_idx)
+    isAmaFirst := isAmaFirst_val
+    ama_idx := ama_idx_val
 if showPurnima
-    [isPooFirst, poo_idx] = f_is_event_start(purnimaDates, poo_idx)
+    [isPooFirst_val, poo_idx_val] = f_is_event_start(purnimaDates, poo_idx)
+    isPooFirst := isPooFirst_val
+    poo_idx := poo_idx_val
 lookback = input.int(200, "Label Position Lookback", group="Lunar Events")
 highestHigh = ta.highest(high, lookback)
 lowestLow = ta.lowest(low, lookback)
@@ -81,6 +83,13 @@ f_draw_event(_time, _label, _emoji, _color, _pos, _isFirst) =>
         label.new(x=_time, y=_y, text=_label + _emojiText, xloc=xloc.bar_time, yloc=yloc.price, style=_labstyle, color=_color, textcolor=color.white)
 f_draw_event(time, "Amavasya", "🌑", amavasyaColor, amavasyaLabelPos, isAmaFirst)
 f_draw_event(time, "Purnima", "🌕", purnimaColor, purnimaLabelPos, isPooFirst)
+var int lastP_time = na
+var int lastA_time = na
+if isPooFirst
+    lastP_time := array.get(purnimaDates, poo_idx - 1)
+if isAmaFirst
+    lastA_time := array.get(amavasyaDates, ama_idx - 1)
+inBullish = nz(lastP_time, 0) > nz(lastA_time, 0)
 vwapValue = ta.vwap(hlc3)
 smoothedVWAPValue = ta.ema(vwapValue, smoothedVWAPLength)
 plot(showVWAP ? vwapValue : na, "VWAP", color=vwapColor, linewidth=vwapWidth)
@@ -108,19 +117,12 @@ slopeColor = slope > 0 ? color.green : color.red
 plot(showLinRegSlope ? linReg : na, "Slope", color=slopeColor, linewidth=2, style=plot.style_line)
 var label infoPanel = na
 var label phaseLabel = na
+f_next_event_time(date_array, idx) =>
+    idx < array.size(date_array) ? array.get(date_array, idx) : na
+fmtDate(_t) => na(_t) ? "N/A" : str.format("{0,date,dd MMM yyyy HH:mm}", _t)
 if showInfoPanel and barstate.islast
-    var lastP_time = na
-    var lastA_time = na
-    if isPooFirst
-        lastP_time := array.get(purnimaDates, poo_idx - 1)
-    if isAmaFirst
-        lastA_time := array.get(amavasyaDates, ama_idx - 1)
-    inBullish = nz(lastP_time, 0) > nz(lastA_time, 0)
-    f_next_event_time(date_array, idx) =>
-        idx < array.size(date_array) ? array.get(date_array, idx) : na
     nextAma = f_next_event_time(amavasyaDates, ama_idx)
     nextPoo = f_next_event_time(purnimaDates, poo_idx)
-    fmtDate(_t) => na(_t) ? "N/A" : str.format("{0,date,dd MMM yyyy HH:mm}", _t)
     nextText = ""
     if na(nextAma) and na(nextPoo)
         nextText := "No future events in data"
