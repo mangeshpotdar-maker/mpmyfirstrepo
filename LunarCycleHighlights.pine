@@ -12,7 +12,7 @@ var G_PURNIMA = "Purnima Display"
 purnimaColor = input.color(color.new(color.green, 0), "Color", group = G_PURNIMA)
 var G_PANEL = "Info Panel"
 showInfoPanel = input.bool(true, "Show Phase Info Panel", group = G_PANEL)
-panelPosition = input.string("bottom-left", "Panel Position", options=["bottom-left","top-right"], group = G_PANEL)
+panelPosition = input.string("bottom-right", "Panel Position", options=["bottom-left", "top-right", "bottom-right"], group = G_PANEL)
 var G_VWAP = "VWAP"
 showVWAP = input.bool(true, "Show VWAP", group = G_VWAP)
 vwapColor = input.color(color.new(color.blue, 0), "VWAP Color", group = G_VWAP)
@@ -98,6 +98,11 @@ if sellSignal
 // -----------------------------------------------------------------------------
 // === Amavasya Breakout Section ===
 // -----------------------------------------------------------------------------
+var line amaHighLine = na
+var label amaHighLabel = na
+var line amaLowLine = na
+var label amaLowLabel = na
+
 var float amaHigh = na
 var float amaLow = na
 var int amaBarIndex = na
@@ -107,19 +112,32 @@ if isAmaFirst
     amaLow := low
     amaBarIndex := bar_index
 
+    if showBreakoutLines
+        if not na(amaHighLine)
+            amaHighLine.delete()
+            amaHighLabel.delete()
+        if not na(amaLowLine)
+            amaLowLine.delete()
+            amaLowLabel.delete()
+
+        amaHighLine := line.new(bar_index, amaHigh, bar_index + 1, amaHigh, extend=extend.right, color=breakoutHighColor, style=line.style_dotted)
+        amaHighLabel := label.new(bar_index, amaHigh, "Ama High", style=label.style_label_left, color=breakoutHighColor, textcolor=color.white)
+        amaLowLine := line.new(bar_index, amaLow, bar_index + 1, amaLow, extend=extend.right, color=breakoutLowColor, style=line.style_dotted)
+        amaLowLabel := label.new(bar_index, amaLow, "Ama Low", style=label.style_label_left, color=breakoutLowColor, textcolor=color.white)
+
 if bar_index > amaBarIndex and bar_index <= amaBarIndex + 2
     if high > amaHigh
         amaHigh := high
+        if showBreakoutLines
+            amaHighLine.set_y1(amaHigh)
+            amaHighLine.set_y2(amaHigh)
+            amaHighLabel.set_y(amaHigh)
     if low < amaLow
         amaLow := low
-
-if showBreakoutLines
-    if not na(amaHigh)
-        line.new(bar_index, amaHigh, bar_index + 1, amaHigh, extend=extend.right, color=breakoutHighColor, style=line.style_dotted)
-        label.new(bar_index, amaHigh, "Ama High", style=label.style_label_left, color=breakoutHighColor, textcolor=color.white)
-    if not na(amaLow)
-        line.new(bar_index, amaLow, bar_index + 1, amaLow, extend=extend.right, color=breakoutLowColor, style=line.style_dotted)
-        label.new(bar_index, amaLow, "Ama Low", style=label.style_label_left, color=breakoutLowColor, textcolor=color.white)
+        if showBreakoutLines
+            amaLowLine.set_y1(amaLow)
+            amaLowLine.set_y2(amaLow)
+            amaLowLabel.set_y(amaLow)
 
 bgcolor(inBullish ? bullishColor : bearishColor)
 var label infoPanel = na
@@ -145,8 +163,13 @@ if showInfoPanel and barstate.islast
         label.delete(phaseLabel)
     if panelPosition == "bottom-left"
         infoPanel := label.new(x=bar_index, y=lowestLow, xloc=xloc.bar_index, yloc=yloc.price, text=panelText,style=label.style_label_left, color=color.new(color.gray, 0), textcolor=color.white)
-    else
+    else if panelPosition == "top-right"
         infoPanel := label.new(x=bar_index, y=highestHigh, xloc=xloc.bar_index, yloc=yloc.price, text=panelText,style=label.style_label_right, color=color.new(color.gray, 0), textcolor=color.white)
+    else if panelPosition == "bottom-right"
+        infoPanel := label.new(x=bar_index, y=lowestLow, xloc=xloc.bar_index, yloc=yloc.price, text=panelText,style=label.style_label_right, color=color.new(color.gray, 0), textcolor=color.white)
+
     dotText = inBullish ? "🟢" : "🔴"
     if panelPosition == "bottom-left"
         phaseLabel := label.new(x=bar_index - math.min(40, bar_index), y=lowestLow * 0.98, xloc=xloc.bar_index, yloc=yloc.price,text=dotText, style=label.style_label_left, color=inBullish ? color.new(color.green, 0) : color.new(color.red, 0), textcolor=color.white)
+    else if panelPosition == "bottom-right"
+        phaseLabel := label.new(x=bar_index, y=lowestLow * 0.98, xloc=xloc.bar_index, yloc=yloc.price,text=dotText, style=label.style_label_right, color=inBullish ? color.new(color.green, 0) : color.new(color.red, 0), textcolor=color.white)
