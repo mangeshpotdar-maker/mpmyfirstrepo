@@ -8,10 +8,8 @@ showEventBeginLabels = input.bool(false, "Show '... begins' Labels", tooltip="Sh
 var G_AMAVASYA = "Amavasya Display"
 amavasyaLabelPos = input.string("top", "Label Position", options=["top", "bottom"], group = G_AMAVASYA)
 amavasyaColor = input.color(color.new(color.red, 0), "Color", group = G_AMAVASYA)
-amavasyaBgColor = input.color(color.new(color.red, 88), "Background Tint", group = G_AMAVASYA)
 var G_PURNIMA = "Purnima Display"
 purnimaColor = input.color(color.new(color.green, 0), "Color", group = G_PURNIMA)
-purnimaBgColor = input.color(color.new(color.green, 88), "Background Tint", group = G_PURNIMA)
 var G_PANEL = "Info Panel"
 showInfoPanel = input.bool(true, "Show Phase Info Panel", group = G_PANEL)
 panelPosition = input.string("bottom-left", "Panel Position", options=["bottom-left","top-right"], group = G_PANEL)
@@ -29,6 +27,11 @@ sellSignalColor = input.color(color.new(color.red, 0), "Sell Signal Color", grou
 var G_BG = "Background Coloring"
 bullishColor = input.color(color.new(color.green, 90), "Bullish Color", group = G_BG)
 bearishColor = input.color(color.new(color.red, 90), "Bearish Color", group = G_BG)
+
+var G_BREAKOUT = "Amavasya Breakout Lines"
+showBreakoutLines = input.bool(true, "Show Breakout Lines", group = G_BREAKOUT)
+breakoutHighColor = input.color(color.new(color.red, 0), "High Line Color", group = G_BREAKOUT)
+breakoutLowColor = input.color(color.new(color.green, 0), "Low Line Color", group = G_BREAKOUT)
 var amavasyaDates = array.from(timestamp("Asia/Kolkata", 2024, 1, 11, 5, 57), timestamp("Asia/Kolkata", 2024, 2, 9, 16, 0), timestamp("Asia/Kolkata", 2024, 3, 10, 14, 1), timestamp("Asia/Kolkata", 2024, 4, 8, 23, 19), timestamp("Asia/Kolkata", 2024, 5, 8, 8, 57), timestamp("Asia/Kolkata", 2024, 6, 6, 17, 38), timestamp("Asia/Kolkata", 2024, 7, 6, 6, 0), timestamp("Asia/Kolkata", 2024, 8, 4, 19, 14), timestamp("Asia/Kolkata", 2024, 9, 3, 9, 26), timestamp("Asia/Kolkata", 2024, 10, 2, 23, 25), timestamp("Asia/Kolkata", 2024, 11, 1, 12, 3), timestamp("Asia/Kolkata", 2024, 12, 1, 0, 32), timestamp("Asia/Kolkata", 2025, 1, 29, 9, 54), timestamp("Asia/Kolkata", 2025, 2, 28, 15, 5), timestamp("Asia/Kolkata", 2025, 3, 29, 18, 43), timestamp("Asia/Kolkata", 2025, 4, 28, 22, 20), timestamp("Asia/Kolkata", 2025, 5, 28, 2, 37), timestamp("Asia/Kolkata", 2025, 6, 26, 8, 1), timestamp("Asia/Kolkata", 2025, 7, 25, 15, 12), timestamp("Asia/Kolkata", 2025, 8, 24, 1, 51), timestamp("Asia/Kolkata", 2025, 9, 22, 16, 1), timestamp("Asia/Kolkata", 2025, 10, 22, 8, 25), timestamp("Asia/Kolkata", 2025, 11, 21, 3, 30), timestamp("Asia/Kolkata", 2025, 12, 20, 22, 20), timestamp("Asia/Kolkata", 2026, 1, 19, 15, 8), timestamp("Asia/Kolkata", 2026, 2, 18, 4, 39), timestamp("Asia/Kolkata", 2026, 3, 19, 14, 57), timestamp("Asia/Kolkata", 2026, 4, 17, 23, 13), timestamp("Asia/Kolkata", 2026, 5, 17, 6, 3), timestamp("Asia/Kolkata", 2026, 6, 15, 13, 28), timestamp("Asia/Kolkata", 2026, 7, 14, 22, 21), timestamp("Asia/Kolkata", 2026, 8, 13, 9, 13), timestamp("Asia/Kolkata", 2026, 9, 11, 22, 9), timestamp("Asia/Kolkata", 2026, 10, 11, 13, 1), timestamp("Asia/Kolkata", 2026, 11, 10, 8, 0), timestamp("Asia/Kolkata", 2026, 12, 10, 4, 28))
 var purnimaDates = array.from(timestamp("Asia/Kolkata", 2024, 1, 25, 5, 54), timestamp("Asia/Kolkata", 2024, 2, 24, 18, 39), timestamp("Asia/Kolkata", 2024, 3, 25, 12, 3), timestamp("Asia/Kolkata", 2024, 4, 24, 8, 17), timestamp("Asia/Kolkata", 2024, 5, 23, 6, 47), timestamp("Asia/Kolkata", 2024, 6, 22, 7, 8), timestamp("Asia/Kolkata", 2024, 7, 21, 9, 38), timestamp("Asia/Kolkata", 2024, 8, 19, 14, 0), timestamp("Asia/Kolkata", 2024, 9, 18, 20, 34), timestamp("Asia/Kolkata", 2024, 10, 17, 5, 19), timestamp("Asia/Kolkata", 2024, 11, 15, 16, 17), timestamp("Asia/Kolkata", 2024, 12, 15, 5, 15), timestamp("Asia/Kolkata", 2025, 1, 13, 19, 24), timestamp("Asia/Kolkata", 2025, 2, 12, 9, 49), timestamp("Asia/Kolkata", 2025, 3, 13, 23, 39), timestamp("Asia/Kolkata", 2025, 4, 12, 11, 33), timestamp("Asia/Kolkata", 2025, 5, 12, 21, 14), timestamp("Asia/Kolkata", 2025, 6, 11, 5, 13), timestamp("Asia/Kolkata", 2025, 7, 10, 12, 23), timestamp("Asia/Kolkata", 2025, 8, 8, 19, 19), timestamp("Asia/Kolkata", 2025, 9, 7, 3, 5), timestamp("Asia/Kolkata", 2025, 10, 6, 12, 4), timestamp("Asia/Kolkata", 2025, 11, 4, 23, 21), timestamp("Asia/Kolkata", 2025, 12, 4, 13, 0), timestamp("Asia/Kolkata", 2026, 1, 3, 4, 14), timestamp("Asia/Kolkata", 2026, 2, 1, 20, 3), timestamp("Asia/Kolkata", 2026, 3, 3, 10, 34), timestamp("Asia/Kolkata", 2026, 4, 2, 0, 15), timestamp("Asia/Kolkata", 2026, 5, 1, 11, 22), timestamp("Asia/Kolkata", 2026, 5, 30, 20, 55), timestamp("Asia/Kolkata", 2026, 6, 29, 5, 6), timestamp("Asia/Kolkata", 2026, 7, 28, 12, 32), timestamp("Asia/Kolkata", 2026, 8, 26, 20, 9), timestamp("Asia/Kolkata", 2026, 9, 25, 4, 49), timestamp("Asia/Kolkata", 2026, 10, 24, 15, 7), timestamp("Asia/Kolkata", 2026, 11, 23, 3, 27), timestamp("Asia/Kolkata", 2026, 12, 22, 17, 7))
 f_is_event_start(date_array, array_idx_var) =>
@@ -91,6 +94,33 @@ if buySignal
     alert("VWAP Crossover Buy Signal", freq = alert.freq_once_per_bar)
 if sellSignal
     alert("VWAP Crossover Sell Signal", freq = alert.freq_once_per_bar)
+
+// -----------------------------------------------------------------------------
+// === Amavasya Breakout Section ===
+// -----------------------------------------------------------------------------
+var float amaHigh = na
+var float amaLow = na
+var int amaBarIndex = na
+
+if isAmaFirst
+    amaHigh := high
+    amaLow := low
+    amaBarIndex := bar_index
+
+if bar_index > amaBarIndex and bar_index <= amaBarIndex + 2
+    if high > amaHigh
+        amaHigh := high
+    if low < amaLow
+        amaLow := low
+
+if showBreakoutLines
+    if not na(amaHigh)
+        line.new(bar_index, amaHigh, bar_index + 1, amaHigh, extend=extend.right, color=breakoutHighColor, style=line.style_dotted)
+        label.new(bar_index, amaHigh, "Ama High", style=label.style_label_left, color=breakoutHighColor, textcolor=color.white)
+    if not na(amaLow)
+        line.new(bar_index, amaLow, bar_index + 1, amaLow, extend=extend.right, color=breakoutLowColor, style=line.style_dotted)
+        label.new(bar_index, amaLow, "Ama Low", style=label.style_label_left, color=breakoutLowColor, textcolor=color.white)
+
 bgcolor(inBullish ? bullishColor : bearishColor)
 var label infoPanel = na
 var label phaseLabel = na
