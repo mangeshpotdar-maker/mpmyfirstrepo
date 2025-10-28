@@ -1,5 +1,5 @@
 //@version=6
-indicator("Astro VWAP Indicator", overlay=true)
+indicator("Astro VWAP Indicator", "Astro VWAP", overlay=true)
 
 // --- START --- Astro Block
 // @description Holds all astrological data and settings.
@@ -13,6 +13,23 @@ showVWAP = input.bool(true, title="Show VWAP", group="Display Settings")
 showSmoothedVWAP = input.bool(true, title="Show Smoothed VWAP", group="Display Settings")
 showSignals = input.bool(true, title="Show Buy/Sell Signals", group="Display Settings")
 showBgColor = input.bool(true, title="Show Background Coloring", group="Display Settings")
+bullishColor = input.color(color.new(color.green, 90), title="Bullish Color", group="Display Settings")
+bearishColor = input.color(color.new(color.red, 90), title="Bearish Color", group="Display Settings")
+showPDHL = input.bool(true, title="Show Previous Day High/Low", group="Display Settings")
+pdhlColor = input.color(color.blue, title="PDHL Color", group="Display Settings")
+pdhlWidth = input.int(2, title="PDHL Width", group="Display Settings")
+showProximityTable = input.bool(true, title="Show VWAP Proximity Table", group="Display Settings")
+colorHighVolume = input.bool(true, title="Color High Volume Candles", group="Display Settings")
+vwapUpColor = input.color(color.new(color.darkgreen, 0), title="VWAP Up Color", group="VWAP Settings")
+vwapDownColor = input.color(color.new(color.darkred, 0), title="VWAP Down Color", group="VWAP Settings")
+
+// --- Vertical Line Settings ---
+showVerticalLines = input.bool(true, title="Show Vertical Event Lines", group="Display Settings")
+amavasyaLineColor = input.color(color.red, title="Amavasya Line Color", group="Display Settings")
+purnimaLineColor = input.color(color.green, title="Purnima Line Color", group="Display Settings")
+pushyaLineColor = input.color(color.yellow, title="Pushya Nakshatra Line Color", group="Display Settings")
+eclipseLineColor = input.color(color.gray, title="Eclipse/Solstice Line Color", group="Display Settings")
+lineWidth = input.int(2, title="Line Width", group="Display Settings")
 
 // --- Amavasya Dates ---
 var amavasyaDates = array.from(timestamp("Asia/Kolkata", 2024, 1, 11, 5, 57), timestamp("Asia/Kolkata", 2024, 2, 9, 16, 0), timestamp("Asia/Kolkata", 2024, 3, 10, 14, 1), timestamp("Asia/Kolkata", 2024, 4, 8, 23, 19), timestamp("Asia/Kolkata", 2024, 5, 8, 8, 57), timestamp("Asia/Kolkata", 2024, 6, 6, 17, 38), timestamp("Asia/Kolkata", 2024, 7, 6, 6, 0), timestamp("Asia/Kolkata", 2024, 8, 4, 19, 14), timestamp("Asia/Kolkata", 2024, 9, 3, 9, 26), timestamp("Asia/Kolkata", 2024, 10, 2, 23, 25), timestamp("Asia/Kolkata", 2024, 11, 1, 12, 3), timestamp("Asia/Kolkata", 2024, 12, 1, 0, 32), timestamp("Asia/Kolkata", 2025, 1, 29, 9, 54), timestamp("Asia/Kolkata", 2025, 2, 28, 15, 5), timestamp("Asia/Kolkata", 2025, 3, 29, 18, 43), timestamp("Asia/Kolkata", 2025, 4, 28, 22, 20), timestamp("Asia/Kolkata", 2025, 5, 28, 2, 37), timestamp("Asia/Kolkata", 2025, 6, 26, 8, 1), timestamp("Asia/Kolkata", 2025, 7, 25, 15, 12), timestamp("Asia/Kolkata", 2025, 8, 24, 1, 51), timestamp("Asia/Kolkata", 2025, 9, 22, 16, 1), timestamp("Asia/Kolkata", 2025, 10, 22, 8, 25), timestamp("Asia/Kolkata", 2025, 11, 21, 3, 30), timestamp("Asia/Kolkata", 2025, 12, 20, 22, 20), timestamp("Asia/Kolkata", 2026, 1, 19, 15, 8), timestamp("Asia/Kolkata", 2026, 2, 18, 4, 39), timestamp("Asia/Kolkata", 2026, 3, 19, 14, 57), timestamp("Asia/Kolkata", 2026, 4, 17, 23, 13), timestamp("Asia/Kolkata", 2026, 5, 17, 6, 3), timestamp("Asia/Kolkata", 2026, 6, 15, 13, 28), timestamp("Asia/Kolkata", 2026, 7, 14, 22, 21), timestamp("Asia/Kolkata", 2026, 8, 13, 9, 13), timestamp("Asia/Kolkata", 2026, 9, 11, 22, 9), timestamp("Asia/Kolkata", 2026, 10, 11, 13, 1), timestamp("Asia/Kolkata", 2026, 11, 10, 8, 0), timestamp("Asia/Kolkata", 2026, 12, 10, 4, 28))
@@ -21,44 +38,13 @@ var amavasyaDates = array.from(timestamp("Asia/Kolkata", 2024, 1, 11, 5, 57), ti
 var purnimaDates = array.from(timestamp("Asia/Kolkata", 2024, 1, 25, 5, 54), timestamp("Asia/Kolkata", 2024, 2, 24, 18, 39), timestamp("Asia/Kolkata", 2024, 3, 25, 12, 3), timestamp("Asia/Kolkata", 2024, 4, 24, 8, 17), timestamp("Asia/Kolkata", 2024, 5, 23, 6, 47), timestamp("Asia/Kolkata", 2024, 6, 22, 7, 8), timestamp("Asia/Kolkata", 2024, 7, 21, 9, 38), timestamp("Asia/Kolkata", 2024, 8, 19, 14, 0), timestamp("Asia/Kolkata", 2024, 9, 18, 20, 34), timestamp("Asia/Kolkata", 2024, 10, 17, 5, 19), timestamp("Asia/Kolkata", 2024, 11, 15, 16, 17), timestamp("Asia/Kolkata", 2024, 12, 15, 5, 15), timestamp("Asia/Kolkata", 2025, 1, 13, 19, 24), timestamp("Asia/Kolkata", 2025, 2, 12, 9, 49), timestamp("Asia/Kolkata", 2025, 3, 13, 23, 39), timestamp("Asia/Kolkata", 2025, 4, 12, 11, 33), timestamp("Asia/Kolkata", 2025, 5, 12, 21, 14), timestamp("Asia/Kolkata", 2025, 6, 11, 5, 13), timestamp("Asia/Kolkata", 2025, 7, 10, 12, 23), timestamp("Asia/Kolkata", 2025, 8, 8, 19, 19), timestamp("Asia/Kolkata", 2025, 9, 7, 3, 5), timestamp("Asia/Kolkata", 2025, 10, 6, 12, 4), timestamp("Asia/Kolkata", 2025, 11, 4, 23, 21), timestamp("Asia/Kolkata", 2025, 12, 4, 13, 0), timestamp("Asia/Kolkata", 2026, 1, 3, 4, 14), timestamp("Asia/Kolkata", 2026, 2, 1, 20, 3), timestamp("Asia/Kolkata", 2026, 3, 3, 10, 34), timestamp("Asia/Kolkata", 2026, 4, 2, 0, 15), timestamp("Asia/Kolkata", 2026, 5, 1, 11, 22), timestamp("Asia/Kolkata", 2026, 5, 30, 20, 55), timestamp("Asia/Kolkata", 2026, 6, 29, 5, 6), timestamp("Asia/Kolkata", 2026, 7, 28, 12, 32), timestamp("Asia/Kolkata", 2026, 8, 26, 20, 9), timestamp("Asia/Kolkata", 2026, 9, 25, 4, 49), timestamp("Asia/Kolkata", 2026, 10, 24, 15, 7), timestamp("Asia/Kolkata", 2026, 11, 23, 3, 27), timestamp("Asia/Kolkata", 2026, 12, 22, 17, 7))
 
 // --- Pushya Nakshatra Dates ---
-var pushyaNakshatraDates = array.from(
- timestamp("Asia/Kolkata", 2024, 1, 26, 10, 28),
- timestamp("Asia/Kolkata", 2024, 5, 14, 13, 5),
- timestamp("Asia/Kolkata", 2024, 8, 4, 13, 26),
- timestamp("Asia/Kolkata", 2024, 9, 28, 13, 20),
- timestamp("Asia/Kolkata", 2025, 1, 15, 10, 28),
- timestamp("Asia/Kolkata", 2025, 10, 15, 12, 0),
- timestamp("Asia/Kolkata", 2026, 1, 5, 13, 25),
- timestamp("Asia/Kolkata", 2026, 3, 28, 14, 50),
- timestamp("Asia/Kolkata", 2026, 6, 18, 11, 33),
- timestamp("Asia/Kolkata", 2026, 8, 12, 10, 9)
-)
+var pushyaNakshatraDates = array.from(timestamp("Asia/Kolkata", 2024, 1, 26, 10, 28), timestamp("Asia/Kolkata", 2024, 5, 14, 13, 5), timestamp("Asia/Kolkata", 2024, 8, 4, 13, 26), timestamp("Asia/Kolkata", 2024, 9, 28, 13, 20), timestamp("Asia/Kolkata", 2025, 1, 15, 10, 28), timestamp("Asia/Kolkata", 2025, 10, 15, 12, 0), timestamp("Asia/Kolkata", 2026, 1, 5, 13, 25), timestamp("Asia/Kolkata", 2026, 3, 28, 14, 50), timestamp("Asia/Kolkata", 2026, 6, 18, 11, 33), timestamp("Asia/Kolkata", 2026, 8, 12, 10, 9))
 
 // --- Eclipse Dates ---
-var eclipseDates = array.from(
- timestamp("Asia/Kolkata", 2024, 3, 25, 12, 30),
- timestamp("Asia/Kolkata", 2024, 9, 18, 8, 11),
- timestamp("Asia/Kolkata", 2025, 3, 14, 12, 25),
- timestamp("Asia/Kolkata", 2025, 9, 7, 23, 42),
- timestamp("Asia/Kolkata", 2026, 3, 3, 16, 54),
- timestamp("Asia/Kolkata", 2026, 8, 28, 9, 47)
-)
+var eclipseDates = array.from(timestamp("Asia/Kolkata", 2024, 3, 25, 12, 30), timestamp("Asia/Kolkata", 2024, 9, 18, 8, 11), timestamp("Asia/Kolkata", 2025, 3, 14, 12, 25), timestamp("Asia/Kolkata", 2025, 9, 7, 23, 42), timestamp("Asia/Kolkata", 2026, 3, 3, 16, 54), timestamp("Asia/Kolkata", 2026, 8, 28, 9, 47))
 
 // --- Solstice and Equinox Dates ---
-var solsticeEquinoxDates = array.from(
- timestamp("Asia/Kolkata", 2024, 3, 20, 8, 36),
- timestamp("Asia/Kolkata", 2024, 6, 21, 2, 20),
- timestamp("Asia/Kolkata", 2024, 9, 22, 18, 13),
- timestamp("Asia/Kolkata", 2024, 12, 21, 14, 50),
- timestamp("Asia/Kolkata", 2025, 3, 20, 14, 31),
- timestamp("Asia/Kolkata", 2025, 6, 21, 8, 12),
- timestamp("Asia/Kolkata", 2025, 9, 22, 23, 49),
- timestamp("Asia/Kolkata", 2025, 12, 21, 20, 33),
- timestamp("Asia/Kolkata", 2026, 3, 20, 20, 16),
- timestamp("Asia/Kolkata", 2026, 6, 21, 13, 54),
- timestamp("Asia/Kolkata", 2026, 9, 23, 5, 35),
- timestamp("Asia/Kolkata", 2026, 12, 22, 2, 20)
-)
+var solsticeEquinoxDates = array.from(timestamp("Asia/Kolkata", 2024, 3, 20, 8, 36), timestamp("Asia/Kolkata", 2024, 6, 21, 2, 20), timestamp("Asia/Kolkata", 2024, 9, 22, 18, 13), timestamp("Asia/Kolkata", 2024, 12, 21, 14, 50), timestamp("Asia/Kolkata", 2025, 3, 20, 14, 31), timestamp("Asia/Kolkata", 2025, 6, 21, 8, 12), timestamp("Asia/Kolkata", 2025, 9, 22, 23, 49), timestamp("Asia/Kolkata", 2025, 12, 21, 20, 33), timestamp("Asia/Kolkata", 2026, 3, 20, 20, 16), timestamp("Asia/Kolkata", 2026, 6, 21, 13, 54), timestamp("Asia/Kolkata", 2026, 9, 23, 5, 35), timestamp("Asia/Kolkata", 2026, 12, 22, 2, 20))
 
 // --- END --- Astro Block
 
@@ -86,13 +72,13 @@ lastAmavasya = amavasyaIdx > 0 ? array.get(amavasyaDates, amavasyaIdx - 1) : na
 var color bgColor = na
 if not na(lastPurnima) and not na(lastAmavasya)
     if lastPurnima > lastAmavasya
-        bgColor := color.new(color.green, 90) // Bullish
+        bgColor := bullishColor
     else
-        bgColor := color.new(color.red, 90) // Bearish
+        bgColor := bearishColor
 else if na(lastPurnima) and not na(lastAmavasya)
-    bgColor := color.new(color.red, 90) // Bearish (Amavasya occurred first)
+    bgColor := bearishColor
 else if not na(lastPurnima) and na(lastAmavasya)
-    bgColor := color.new(color.green, 90) // Bullish (Purnima occurred first)
+    bgColor := bullishColor
 
 
 bgcolor(showBgColor ? bgColor : na)
@@ -104,28 +90,34 @@ bgcolor(showBgColor ? bgColor : na)
 
 // --- Inputs ---
 vwapPeriod = input.int(14, title="VWAP Period", group="VWAP Settings")
-smoothingType = input.string("EMA", title="Smoothing Type", options=["EMA", "WMA", "HMA"], group="VWAP Settings")
-smoothingLength = input.int(10, title="Smoothing Length", group="VWAP Settings")
+smoothingType = input.string("EMA", title="Smoothing Type", options=["EMA", "WMA", "SMA", "HMA"], group="VWAP Settings")
+smoothingLength = input.int(5, title="Smoothing Length", group="VWAP Settings")
 
 // --- Calculations ---
 // MVWAP calculation with EMA fallback
-mvwa(source, length) =>
-    if not na(volume)
-        ta.sma(source * volume, length) / ta.sma(volume, length)
-    else
-        ta.ema(source, length)
-
-vwapValue = mvwa(hlc3, vwapPeriod)
+vwapValue = if not na(volume)
+    ta.sma(hlc3 * volume, vwapPeriod) / ta.sma(volume, vwapPeriod)
+else
+    ta.ema(hlc3, vwapPeriod)
 
 // Smoothed VWAP calculation
 smoothedVwapValue = switch smoothingType
     "EMA" => ta.ema(vwapValue, smoothingLength)
     "WMA" => ta.wma(vwapValue, smoothingLength)
+    "SMA" => ta.sma(vwapValue, smoothingLength)
     "HMA" => ta.hma(vwapValue, smoothingLength)
 
 // --- Plotting ---
+vwapSlope = smoothedVwapValue - smoothedVwapValue[1]
+vwapColor = vwapSlope > 0 ? vwapUpColor : vwapDownColor
 plot(showVWAP ? vwapValue : na, title="VWAP", color=color.blue)
-plot(showSmoothedVWAP ? smoothedVwapValue : na, title="Smoothed VWAP", color=color.orange)
+plot(showSmoothedVWAP ? smoothedVwapValue : na, title="Smoothed VWAP", color=vwapColor)
+
+// --- VWAP Turning Points ---
+vwapTurnUp = vwapSlope > 0 and vwapSlope[1] <= 0
+vwapTurnDown = vwapSlope < 0 and vwapSlope[1] >= 0
+plotshape(vwapTurnUp, style=shape.labelup, location=location.belowbar, color=color.new(color.white, 100), text="🔥", size=size.tiny, title="VWAP Turn Up")
+plotshape(vwapTurnDown, style=shape.labeldown, location=location.abovebar, color=color.new(color.white, 100), text="🔥", size=size.tiny, title="VWAP Turn Down")
 
 // --- END --- VWAP Block
 
@@ -136,12 +128,15 @@ plot(showSmoothedVWAP ? smoothedVwapValue : na, title="Smoothed VWAP", color=col
 isBullishPhase = lastPurnima > lastAmavasya
 isBearishPhase = lastAmavasya > lastPurnima
 
-buySignal = ta.crossover(close[1], smoothedVwapValue[1]) and isBullishPhase
-sellSignal = ta.crossunder(close[1], smoothedVwapValue[1]) and isBearishPhase
+buy_signal_raw = ta.crossover(close, smoothedVwapValue)
+sell_signal_raw = ta.crossunder(close, smoothedVwapValue)
+
+buySignal = buy_signal_raw[1] and isBullishPhase
+sellSignal = sell_signal_raw[1] and isBearishPhase
 
 // --- Plotting Signals ---
-plotshape(showSignals and buySignal, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.small, title="Buy Signal")
-plotshape(showSignals and sellSignal, style=shape.triangledown, location=location.abovebar, color=color.red, size=size.small, title="Sell Signal")
+plotshape(showSignals and buySignal, style=shape.triangleup, location=location.belowbar, color=color.green, size=size.tiny, title="Buy Signal")
+plotshape(showSignals and sellSignal, style=shape.triangledown, location=location.abovebar, color=color.red, size=size.tiny, title="Sell Signal")
 
 // --- END --- Signals Block
 
@@ -150,58 +145,99 @@ plotshape(showSignals and sellSignal, style=shape.triangledown, location=locatio
 
 // --- Event Labels ---
 
-// Function to get previous month's high
-get_prev_month_high() =>
-    isNewMonth = month(time) != month(time[1])
-    var float prevMonthHigh = na
-    var float monthHigh = high
-    if isNewMonth
-        prevMonthHigh := monthHigh[1]
-        monthHigh := high
-    else
-        monthHigh := math.max(nz(monthHigh[1]), high)
-    prevMonthHigh
+// --- Monthly High/Low for Label Positioning ---
+isNewMonth = month(time) != month(time[1])
+var float monthHigh = high
+var float monthLow = low
+if isNewMonth
+    monthHigh := high
+    monthLow := low
+else
+    monthHigh := math.max(nz(monthHigh[1]), high)
+    monthLow := math.min(nz(monthLow[1]), low)
 
-float prevMonthHigh = get_prev_month_high()
-
-// Event plotting logic with optimization
+// Event plotting logic
 var amavasyaLabelIdx = 0
 var purnimaLabelIdx = 0
 var pushyaLabelIdx = 0
 var eclipseLabelIdx = 0
 var solsticeEquinoxLabelIdx = 0
 
-if showPurnimaAmavasya
-    while amavasyaLabelIdx < array.size(amavasyaDates) and array.get(amavasyaDates, amavasyaLabelIdx) < time
+if showPurnimaAmavasya and amavasyaLabelIdx < array.size(amavasyaDates)
+    while amavasyaLabelIdx < array.size(amavasyaDates) and array.get(amavasyaDates, amavasyaLabelIdx) <= time
         if time >= array.get(amavasyaDates, amavasyaLabelIdx) and time[1] < array.get(amavasyaDates, amavasyaLabelIdx)
-            label.new(x=time, y=prevMonthHigh, text="🌑", style=label.style_none, textcolor=color.white, size=size.small, tooltip="Amavasya")
+            label.new(x=time, y=monthHigh + 200, text="🌑", style=label.style_none, textcolor=color.white, size=size.large, tooltip="Amavasya", xloc=xloc.bar_time)
+            if showVerticalLines
+                line.new(bar_index, low, bar_index, high, color=amavasyaLineColor, width=lineWidth, extend=extend.both)
         amavasyaLabelIdx += 1
 
-if showPurnimaAmavasya
-    while purnimaLabelIdx < array.size(purnimaDates) and array.get(purnimaDates, purnimaLabelIdx) < time
+if showPurnimaAmavasya and purnimaLabelIdx < array.size(purnimaDates)
+    while purnimaLabelIdx < array.size(purnimaDates) and array.get(purnimaDates, purnimaLabelIdx) <= time
         if time >= array.get(purnimaDates, purnimaLabelIdx) and time[1] < array.get(purnimaDates, purnimaLabelIdx)
-            label.new(x=time, y=prevMonthHigh, text="🌕", style=label.style_none, textcolor=color.white, size=size.small, tooltip="Purnima")
+            label.new(x=time, y=monthLow - 200, text="🌕", style=label.style_none, textcolor=color.white, size=size.large, tooltip="Purnima", xloc=xloc.bar_time)
+            if showVerticalLines
+                line.new(bar_index, low, bar_index, high, color=purnimaLineColor, width=lineWidth, extend=extend.both)
         purnimaLabelIdx += 1
 
-if showPushyaNakshatra
-    while pushyaLabelIdx < array.size(pushyaNakshatraDates) and array.get(pushyaNakshatraDates, pushyaLabelIdx) < time
+if showPushyaNakshatra and pushyaLabelIdx < array.size(pushyaNakshatraDates)
+    while pushyaLabelIdx < array.size(pushyaNakshatraDates) and array.get(pushyaNakshatraDates, pushyaLabelIdx) <= time
         if time >= array.get(pushyaNakshatraDates, pushyaLabelIdx) and time[1] < array.get(pushyaNakshatraDates, pushyaLabelIdx)
-            label.new(x=time, y=low, text="✨", style=label.style_label_up, color=color.new(color.purple, 75), textcolor=color.white, tooltip="Pushya Nakshatra")
+            label.new(x=time, y=monthHigh + 200, text="✨", style=label.style_label_down, color=color.new(color.purple, 75), textcolor=color.white, tooltip="Pushya Nakshatra", xloc=xloc.bar_time)
+            if showVerticalLines
+                line.new(bar_index, low, bar_index, high, color=pushyaLineColor, width=lineWidth, extend=extend.both)
         pushyaLabelIdx += 1
 
-if showEclipses
-    while eclipseLabelIdx < array.size(eclipseDates) and array.get(eclipseDates, eclipseLabelIdx) < time
+if showEclipses and eclipseLabelIdx < array.size(eclipseDates)
+    while eclipseLabelIdx < array.size(eclipseDates) and array.get(eclipseDates, eclipseLabelIdx) <= time
         if time >= array.get(eclipseDates, eclipseLabelIdx) and time[1] < array.get(eclipseDates, eclipseLabelIdx)
-            label.new(x=time, y=low, text="ECL", style=label.style_label_up, color=color.new(color.orange, 75), textcolor=color.white, tooltip="Eclipse")
+            label.new(x=time, y=monthHigh + 200, text="ECL", style=label.style_label_down, color=color.new(color.orange, 75), textcolor=color.white, tooltip="Eclipse", xloc=xloc.bar_time)
+            if showVerticalLines
+                line.new(bar_index, low, bar_index, high, color=eclipseLineColor, width=lineWidth, extend=extend.both)
         eclipseLabelIdx += 1
 
-if showSolsticesEquinoxes
-    while solsticeEquinoxLabelIdx < array.size(solsticeEquinoxDates) and array.get(solsticeEquinoxDates, solsticeEquinoxLabelIdx) < time
+if showSolsticesEquinoxes and solsticeEquinoxLabelIdx < array.size(solsticeEquinoxDates)
+    while solsticeEquinoxLabelIdx < array.size(solsticeEquinoxDates) and array.get(solsticeEquinoxDates, solsticeEquinoxLabelIdx) <= time
         if time >= array.get(solsticeEquinoxDates, solsticeEquinoxLabelIdx) and time[1] < array.get(solsticeEquinoxDates, solsticeEquinoxLabelIdx)
-            label.new(x=time, y=low, text="S/E", style=label.style_label_up, color=color.new(color.yellow, 75), textcolor=color.black, tooltip="Solstice/Equinox")
+            label.new(x=time, y=monthHigh + 200, text="S/E", style=label.style_label_down, color=color.new(color.yellow, 75), textcolor=color.black, tooltip="Solstice/Equinox", xloc=xloc.bar_time)
+            if showVerticalLines
+                line.new(bar_index, low, bar_index, high, color=eclipseLineColor, width=lineWidth, extend=extend.both)
         solsticeEquinoxLabelIdx += 1
 
+// --- Previous Day High/Low ---
+var line pdhLine = na
+var line pdlLine = na
+var label pdhLabel = na
+var label pdlLabel = na
+isNewDay = ta.change(time("D"))
+if isNewDay and showPDHL
+    [pdh, pdl] = request.security(syminfo.tickerid, "D", [high[1], low[1]])
 
+    // Delete old lines and labels
+    line.delete(pdhLine)
+    line.delete(pdlLine)
+    label.delete(pdhLabel)
+    label.delete(pdlLabel)
+
+    // Create new lines and labels
+    pdhLine := line.new(bar_index - 1, pdh, bar_index, pdh, extend=extend.right, color=pdhlColor, width=pdhlWidth)
+    pdlLine := line.new(bar_index - 1, pdl, bar_index, pdl, extend=extend.right, color=pdhlColor, width=pdhlWidth)
+    pdhLabel := label.new(bar_index, pdh, "PDH", style=label.style_none, textcolor=pdhlColor)
+    pdlLabel := label.new(bar_index, pdl, "PDL", style=label.style_none, textcolor=pdhlColor)
+
+// --- VWAP Proximity Table ---
+var table vwapTable = table.new(position.top_right, 2, 3, border_width=1)
+if showProximityTable
+    table.cell(vwapTable, 0, 0, "Close")
+    table.cell(vwapTable, 1, 0, str.tostring(close, "#.##"))
+    table.cell(vwapTable, 0, 1, "VWAP")
+    table.cell(vwapTable, 1, 1, str.tostring(vwapValue, "#.##"))
+    table.cell(vwapTable, 0, 2, "Proximity")
+    table.cell(vwapTable, 1, 2, str.tostring(close - vwapValue, "#.##"))
+
+// --- High Volume Candle Coloring ---
+volumeSma = ta.sma(volume, 10)
+highVolume = volume > volumeSma * 5
+barcolor(colorHighVolume and highVolume ? color.orange : na)
 // --- END --- Plotting Block
 
 // --- START --- Alerts Block
