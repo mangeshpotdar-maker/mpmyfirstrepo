@@ -7,11 +7,13 @@ showEmojis = input.bool(true, "Show Emojis in Labels", group = G_LUNAR)
 showEventBeginLabels = input.bool(false, "Show '... begins' Labels", tooltip="Shows a label for the exact start of the event. The main labels still appear.", group=G_LUNAR)
 
 var G_AMAVASYA = "Amavasya Display"
+amavasyaLabelPos = input.string("top", "Label Position", options=["top", "bottom"], group = G_AMAVASYA)
 amavasyaColor = input.color(color.new(color.red, 0), "Color", group = G_AMAVASYA)
 var G_PURNIMA = "Purnima Display"
 purnimaColor = input.color(color.new(color.green, 0), "Color", group = G_PURNIMA)
 var G_PANEL = "Info Panel"
 showInfoPanel = input.bool(true, "Show Phase Info Panel", group = G_PANEL)
+panelPosition = input.string("bottom-right", "Panel Position", options=["bottom-left", "top-right", "bottom-right"], group = G_PANEL)
 var G_VWAP = "VWAP"
 showVWAP = input.bool(true, "Show VWAP", group = G_VWAP)
 vwapColor = input.color(color.new(color.blue, 0), "VWAP Color", group = G_VWAP)
@@ -21,17 +23,17 @@ smoothedVWAPLength = input.int(10, "Smoothed VWAP Length", minval=1, group = G_V
 smoothedVWAPColor = input.color(color.new(color.orange, 0), "Smoothed VWAP Color", group = G_VWAP)
 var G_SIGNALS = "Crossover Signals"
 showCrossoverSignals = input.bool(true, "Show Crossover Signals", group = G_SIGNALS)
-showSignalText = input.bool(true, "Show Buy/Sell Text", group = G_SIGNALS)
 buySignalColor = input.color(color.new(color.green, 0), "Buy Signal Color", group = G_SIGNALS)
 sellSignalColor = input.color(color.new(color.red, 0), "Sell Signal Color", group = G_SIGNALS)
+showSignalText = input.bool(true, "Show 'Buy'/'Sell' Text", group = G_SIGNALS)
 var G_BG = "Background Coloring"
 bullishColor = input.color(color.new(color.green, 90), "Bullish Color", group = G_BG)
 bearishColor = input.color(color.new(color.red, 90), "Bearish Color", group = G_BG)
 
 var G_PDHL = "Previous Day High/Low"
 showPDHL = input.bool(true, "Show Previous Day High/Low", group = G_PDHL)
-pdhColor = input.color(color.new(color.orange, 0), "High Color", group = G_PDHL)
-pdlColor = input.color(color.new(color.purple, 0), "Low Color", group = G_PDHL)
+pdhColor = input.color(color.new(color.navy, 0), "High Color", group = G_PDHL)
+pdlColor = input.color(color.new(color.blue, 0), "Low Color", group = G_PDHL)
 pdhlWidth = input.int(1, "Line Width", minval=1, maxval=5, group = G_PDHL)
 pdhlStyle = input.string("Dashed", "Line Style", options=["Solid", "Dotted", "Dashed"], group = G_PDHL)
 
@@ -63,15 +65,15 @@ highestHigh = ta.highest(high, lookback)
 lowestLow = ta.lowest(low, lookback)
 atr = ta.atr(14)
 
-var float currentCycleHigh = high
-var float lastCycleHigh = na
-isNewEvent = isAmaFirst or isPooFirst
+var float monthlyHigh = high
+var float prevMonthlyHigh = na
+isNewMonth = ta.change(month) != 0
 
-if isNewEvent
-    lastCycleHigh := nz(currentCycleHigh[1], high)
-    currentCycleHigh := high
+if isNewMonth
+    prevMonthlyHigh := nz(monthlyHigh[1], high)
+    monthlyHigh := high
 else
-    currentCycleHigh := math.max(nz(currentCycleHigh[1], high), high)
+    monthlyHigh := math.max(nz(monthlyHigh[1], high), high)
 
 f_draw_event(_time, _label, _emoji, _color, _isFirst, _y_price) =>
     if _isFirst
@@ -80,7 +82,7 @@ f_draw_event(_time, _label, _emoji, _color, _isFirst, _y_price) =>
         _emojiText = showEmojis ? " " + _emoji : ""
         label.new(x=_time, y=_y_price, text=_label + _emojiText, xloc=xloc.bar_time, yloc=yloc.price, style=_labstyle, color=_color, textcolor=color.white)
 
-y_pos_for_event = lastCycleHigh + atr
+y_pos_for_event = prevMonthlyHigh + atr
 
 f_draw_event(time, "Amavasya", "🌑", amavasyaColor, isAmaFirst, y_pos_for_event)
 f_draw_event(time, "Purnima", "🌕", purnimaColor, isPooFirst, y_pos_for_event)
@@ -97,20 +99,20 @@ plot(showVWAP ? vwapValue : na, "VWAP", color=vwapColor, linewidth=vwapWidth)
 plot(showSmoothedVWAP ? smoothedVWAPValue : na, "Smoothed VWAP", color=smoothedVWAPColor, linewidth=vwapWidth)
 buySignal = ta.crossover(close, smoothedVWAPValue) and inBullish
 sellSignal = ta.crossunder(close, smoothedVWAPValue) and not inBullish
-
-plotshape(showCrossoverSignals and showSignalText and buySignal, style=shape.triangleup, location=location.belowbar, color=buySignalColor, size=size.tiny, text="Buy", textcolor=color.white)
-plotshape(showCrossoverSignals and showSignalText and sellSignal, style=shape.triangledown, location=location.abovebar, color=sellSignalColor, size=size.tiny, text="Sell", textcolor=color.white)
-
-plotshape(showCrossoverSignals and not showSignalText and buySignal, style=shape.triangleup, location=location.belowbar, color=buySignalColor, size=size.tiny)
-plotshape(showCrossoverSignals and not showSignalText and sellSignal, style=shape.triangledown, location=location.abovebar, color=sellSignalColor, size=size.tiny)
+plotshape(showCrossoverSignals and buySignal, style=shape.triangleup, location=location.belowbar, color=buySignalColor, size=size.small, text=showSignalText ? "Buy" : na)
+plotshape(showCrossoverSignals and sellSignal, style=shape.triangledown, location=location.abovebar, color=sellSignalColor, size=size.small, text=showSignalText ? "Sell" : na)
 
 alertcondition(buySignal, title="Buy Signal", message="VWAP Crossover Buy Signal")
 alertcondition(sellSignal, title="Sell Signal", message="VWAP Crossover Sell Signal")
 
 // -----------------------------------------------------------------------------
+// === Amavasya Breakout Section ===
+// -----------------------------------------------------------------------------
+
+// -----------------------------------------------------------------------------
 // === Previous Day High/Low Section ===
 // -----------------------------------------------------------------------------
-[pdh, pdl, prevDayOpenTime] = request.security(syminfo.tickerid, "D", [high[1], low[1], time[1]])
+[pdh, pdl] = request.security(syminfo.tickerid, "D", [high[1], low[1]])
 
 var line pdhLine = na
 var line pdlLine = na
@@ -118,6 +120,9 @@ var label pdhLabel = na
 var label pdlLabel = na
 
 isNewDay = ta.change(time("D")) != 0
+var int currentDayOpenTime = na
+if isNewDay
+    currentDayOpenTime := time
 
 if isNewDay and not na(pdh)
     if not na(pdhLine)
@@ -132,12 +137,17 @@ if isNewDay and not na(pdh)
     lineStyle = pdhlStyle == "Solid" ? line.style_solid : pdhlStyle == "Dotted" ? line.style_dotted : line.style_dashed
 
     if showPDHL
-        pdhLine := line.new(x1=prevDayOpenTime, y1=pdh, x2=time, y2=pdh, xloc=xloc.bar_time, extend=extend.right, color=pdhColor, width=pdhlWidth, style=lineStyle)
-        pdlLine := line.new(x1=prevDayOpenTime, y1=pdl, x2=time, y2=pdl, xloc=xloc.bar_time, extend=extend.right, color=pdlColor, width=pdhlWidth, style=lineStyle)
-        pdhLabel := label.new(x=prevDayOpenTime, y=pdh, text="PDH", xloc=xloc.bar_time, style=label.style_label_right, color=pdhColor, textcolor=color.white, size=size.small)
-        pdlLabel := label.new(x=prevDayOpenTime, y=pdl, text="PDL", xloc=xloc.bar_time, style=label.style_label_right, color=pdlColor, textcolor=color.white, size=size.small)
+        pdhLine := line.new(x1=currentDayOpenTime, y1=pdh, x2=time, y2=pdh, xloc=xloc.bar_time, extend=extend.none, color=pdhColor, width=pdhlWidth, style=lineStyle)
+        pdlLine := line.new(x1=currentDayOpenTime, y1=pdl, x2=time, y2=pdl, xloc=xloc.bar_time, extend=extend.none, color=pdlColor, width=pdhlWidth, style=lineStyle)
+        pdhLabel := label.new(x=currentDayOpenTime, y=pdh, text="PDH", xloc=xloc.bar_time, style=label.style_label_right, color=pdhColor, textcolor=color.white, size=size.small)
+        pdlLabel := label.new(x=currentDayOpenTime, y=pdl, text="PDL", xloc=xloc.bar_time, style=label.style_label_right, color=pdlColor, textcolor=color.white, size=size.small)
+
+if not isNewDay and showPDHL and barstate.isrealtime
+    line.set_x2(pdhLine, time)
+    line.set_x2(pdlLine, time)
 
 bgcolor(inBullish ? bullishColor : bearishColor)
+
 var label infoPanel = na
 
 f_next_event_time(date_array, idx) =>
@@ -146,9 +156,7 @@ f_next_event_time(date_array, idx) =>
 fmtDate(_t) => na(_t) ? "N/A" : str.format("{0,date,dd MMM yyyy HH:mm}", _t)
 
 var int lastEventTime = na
-if isAmaFirst
-    lastEventTime := time
-if isPooFirst
+if isAmaFirst or isPooFirst
     lastEventTime := time
 
 if showInfoPanel and barstate.islast
@@ -165,15 +173,131 @@ if showInfoPanel and barstate.islast
     phaseName = inBullish ? "Purnima → Amavasya (Bullish half)" : "Amavasya → Purnima (Bearish half)"
     panelText = "Phase: " + phaseName + "\n" + nextText
 
-    panelColor = inBullish ? bullishColor : bearishColor
+    panelColor = inBullish ? color.new(color.green, 20) : color.new(color.red, 20)
 
-    if not na(infoPanel)
-        label.delete(infoPanel)
+    label.delete(infoPanel)
 
-    if not na(lastEventTime)
-        infoPanel := label.new(x=lastEventTime, y=y_pos_for_event, yloc=yloc.price,
-                               text=panelText, style=label.style_label_down,
-                               color=panelColor, textcolor=color.white,
-                               xloc=xloc.bar_time)
+    infoPanel := label.new(x=bar_index, y=y_pos_for_event, yloc=yloc.price,
+                           text=panelText, style=label.style_label_up,
+                           color=panelColor, textcolor=color.white,
+                           xloc=xloc.bar_index)
 
+// -----------------------------------------------------------------------------
+// === Linear Regression Channel Section ===
+// -----------------------------------------------------------------------------
+lengthInput = input.int(100,      "Length", minval = 1, maxval = 5000)
+sourceInput = input.source(close, "Source")
+
+group1 = "Channel Settings"
+useUpperDevInput = input.bool(true, "Upper Deviation",             inline = "Upper Deviation", group = group1)
+upperMultInput   = input.float(2.0, "", active = useUpperDevInput, inline = "Upper Deviation", group = group1)
+useLowerDevInput = input.bool(true, "Lower Deviation",             inline = "Lower Deviation", group = group1)
+lowerMultInput   = input.float(2.0, "", active = useLowerDevInput, inline = "Lower Deviation", group = group1)
+
+group2 = "Display Settings"
+showPearsonInput = input.bool(true,  "Show Pearson's R",   group = group2)
+extendLeftInput  = input.bool(false, "Extend Lines Left",  group = group2)
+extendRightInput = input.bool(true,  "Extend Lines Right", group = group2)
+
+extendStyle = switch
+    extendLeftInput and extendRightInput => extend.both
+    extendLeftInput => extend.left
+    extendRightInput => extend.right
+    => extend.none
+
+group3 = "Color Settings"
+colorUpper = input.color(color.new(color.blue, 85), "", inline = group3, group = group3)
+colorLower = input.color(color.new(color.red,  85), "", inline = group3, group = group3)
+
+calcSlope(source, length) =>
+    max_bars_back(source, 5000)
+    if not barstate.islast or length <= 1
+        [float(na), float(na), float(na)]
+    else
+        sumX = 0.0
+        sumY = 0.0
+        sumXSqr = 0.0
+        sumXY = 0.0
+        for i = 0 to length - 1 by 1
+            val = source[i]
+            per = i + 1.0
+            sumX += per
+            sumY += val
+            sumXSqr += per * per
+            sumXY += val * per
+        slope = (length * sumXY - sumX * sumY) / (length * sumXSqr - sumX * sumX)
+        average = sumY / length
+        intercept = average - slope * sumX / length + slope
+        [slope, average, intercept]
+
+[s, a, i] = calcSlope(sourceInput, lengthInput)
+startPrice = i + s * (lengthInput - 1)
+endPrice = i
+var line baseLine = na
+if na(baseLine) and not na(startPrice)
+    baseLine := line.new(bar_index - lengthInput + 1, startPrice, bar_index, endPrice, width=1, extend=extendStyle, color=color.new(colorLower, 0))
+else
+    line.set_xy1(baseLine, bar_index - lengthInput + 1, startPrice)
+    line.set_xy2(baseLine, bar_index, endPrice)
+
+calcDev(source, length, slope, average, intercept) =>
+    upDev = 0.0
+    dnDev = 0.0
+    stdDevAcc = 0.0
+    dsxx = 0.0
+    dsyy = 0.0
+    dsxy = 0.0
+    periods = length - 1
+    daY = intercept + slope * periods / 2
+    val = intercept
+    for j = 0 to periods by 1
+        price = high[j] - val
+        if price > upDev
+            upDev := price
+        price := val - low[j]
+        if price > dnDev
+            dnDev := price
+        price := source[j]
+        dxt = price - average
+        dyt = val - daY
+        price -= val
+        stdDevAcc += price * price
+        dsxx += dxt * dxt
+        dsyy += dyt * dyt
+        dsxy += dxt * dyt
+        val += slope
+    stdDev = math.sqrt(stdDevAcc / (periods == 0 ? 1 : periods))
+    pearsonR = dsxx == 0 or dsyy == 0 ? 0 : dsxy / math.sqrt(dsxx * dsyy)
+    [stdDev, pearsonR, upDev, dnDev]
+
+[stdDev, pearsonR, upDev, dnDev] = calcDev(sourceInput, lengthInput, s, a, i)
+upperStartPrice = startPrice + (useUpperDevInput ? upperMultInput * stdDev : upDev)
+upperEndPrice = endPrice + (useUpperDevInput ? upperMultInput * stdDev : upDev)
+var line upper = na
+lowerStartPrice = startPrice + (useLowerDevInput ? -lowerMultInput * stdDev : -dnDev)
+lowerEndPrice = endPrice + (useLowerDevInput ? -lowerMultInput * stdDev : -dnDev)
+var line lower = na
+if na(upper) and not na(upperStartPrice)
+    upper := line.new(bar_index - lengthInput + 1, upperStartPrice, bar_index, upperEndPrice, width=1, extend=extendStyle, color=color.new(colorUpper, 0))
+else
+    line.set_xy1(upper, bar_index - lengthInput + 1, upperStartPrice)
+    line.set_xy2(upper, bar_index, upperEndPrice)
+if na(lower) and not na(lowerStartPrice)
+    lower := line.new(bar_index - lengthInput + 1, lowerStartPrice, bar_index, lowerEndPrice, width=1, extend=extendStyle, color=color.new(colorLower, 0))
+else
+    line.set_xy1(lower, bar_index - lengthInput + 1, lowerStartPrice)
+    line.set_xy2(lower, bar_index, lowerEndPrice)
+linefill.new(upper, baseLine, color = colorUpper)
+linefill.new(baseLine, lower, color = colorLower)
+
+float trend = math.sign(startPrice - endPrice)
+alertcondition(sourceInput > line.get_price(upper, bar_index) or sourceInput < line.get_price(lower, bar_index), title='Regression Channel Exited', message="The price movement has exited Regression Channel's bounds")
+alertcondition(trend[1] >= 0 and trend < 0, title='Switched to Uptrend',   message='The Regression Channel trend switched from Downtrend to Uptrend')
+alertcondition(trend[1] <= 0 and trend > 0, title='Switched to Downtrend', message='The Regression Channel trend switched from Uptrend to Downtrend')
+
+// Pearson's R
+var label r = na
+label.delete(r[1])
+if showPearsonInput and not na(pearsonR)
+    r := label.new(bar_index - lengthInput + 1, lowerStartPrice, str.tostring(pearsonR, "#.################"), color = color.new(color.white, 100), textcolor=color.new(colorUpper, 0), size=size.normal, style=label.style_label_up)
 // end
