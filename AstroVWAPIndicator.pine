@@ -16,7 +16,7 @@ showBgColor = input.bool(true, title="Show Background Coloring", group="Display 
 bullishColor = input.color(color.new(color.green, 90), title="Bullish Color", group="Display Settings")
 bearishColor = input.color(color.new(color.red, 90), title="Bearish Color", group="Display Settings")
 showPDHL = input.bool(true, title="Show Previous Day High/Low", group="Display Settings")
-pdhlColor = input.color(color.blue, title="PDHL Color", group="Display Settings")
+pdhlColor = input.color(color.new(color.blue, 0), title="PDHL Color", group="Display Settings")
 pdhlWidth = input.int(2, title="PDHL Width", group="Display Settings")
 showProximityTable = input.bool(true, title="Show VWAP Proximity Table", group="Display Settings")
 colorHighVolume = input.bool(true, title="Color High Volume Candles", group="Display Settings")
@@ -95,17 +95,21 @@ smoothingLength = input.int(5, title="Smoothing Length", group="VWAP Settings")
 
 // --- Calculations ---
 // MVWAP calculation with EMA fallback
-vwapValue = if not na(volume)
-    ta.sma(hlc3 * volume, vwapPeriod) / ta.sma(volume, vwapPeriod)
-else
-    ta.ema(hlc3, vwapPeriod)
+vwap_calculation = ta.sma(hlc3 * volume, vwapPeriod) / ta.sma(volume, vwapPeriod)
+ema_fallback = ta.ema(hlc3, vwapPeriod)
+vwapValue = not na(volume) ? vwap_calculation : ema_fallback
 
 // Smoothed VWAP calculation
+emaSmoothed = ta.ema(vwapValue, smoothingLength)
+wmaSmoothed = ta.wma(vwapValue, smoothingLength)
+smaSmoothed = ta.sma(vwapValue, smoothingLength)
+hmaSmoothed = ta.hma(vwapValue, smoothingLength)
+
 smoothedVwapValue = switch smoothingType
-    "EMA" => ta.ema(vwapValue, smoothingLength)
-    "WMA" => ta.wma(vwapValue, smoothingLength)
-    "SMA" => ta.sma(vwapValue, smoothingLength)
-    "HMA" => ta.hma(vwapValue, smoothingLength)
+    "EMA" => emaSmoothed
+    "WMA" => wmaSmoothed
+    "SMA" => smaSmoothed
+    "HMA" => hmaSmoothed
 
 // --- Plotting ---
 vwapSlope = smoothedVwapValue - smoothedVwapValue[1]
@@ -208,7 +212,7 @@ var line pdhLine = na
 var line pdlLine = na
 var label pdhLabel = na
 var label pdlLabel = na
-isNewDay = ta.change(time("D"))
+isNewDay = ta.change(time("D")) != 0
 if isNewDay and showPDHL
     [pdh, pdl] = request.security(syminfo.tickerid, "D", [high[1], low[1]])
 
