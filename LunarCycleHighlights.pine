@@ -97,11 +97,12 @@ plot(showVWAP ? vwapValue : na, "VWAP", color=vwapColor, linewidth=vwapWidth)
 plot(showSmoothedVWAP ? smoothedVWAPValue : na, "Smoothed VWAP", color=smoothedVWAPColor, linewidth=vwapWidth)
 buySignal = ta.crossover(close, smoothedVWAPValue) and inBullish
 sellSignal = ta.crossunder(close, smoothedVWAPValue) and not inBullish
-buySignalText = showSignalText ? "Buy" : ""
-sellSignalText = showSignalText ? "Sell" : ""
 
-plotshape(showCrossoverSignals and buySignal, style=shape.triangleup, location=location.belowbar, color=buySignalColor, size=size.tiny, text=buySignalText, textcolor=color.white)
-plotshape(showCrossoverSignals and sellSignal, style=shape.triangledown, location=location.abovebar, color=sellSignalColor, size=size.tiny, text=sellSignalText, textcolor=color.white)
+plotshape(showCrossoverSignals and showSignalText and buySignal, style=shape.triangleup, location=location.belowbar, color=buySignalColor, size=size.tiny, text="Buy", textcolor=color.white)
+plotshape(showCrossoverSignals and showSignalText and sellSignal, style=shape.triangledown, location=location.abovebar, color=sellSignalColor, size=size.tiny, text="Sell", textcolor=color.white)
+
+plotshape(showCrossoverSignals and not showSignalText and buySignal, style=shape.triangleup, location=location.belowbar, color=buySignalColor, size=size.tiny)
+plotshape(showCrossoverSignals and not showSignalText and sellSignal, style=shape.triangledown, location=location.abovebar, color=sellSignalColor, size=size.tiny)
 
 alertcondition(buySignal, title="Buy Signal", message="VWAP Crossover Buy Signal")
 alertcondition(sellSignal, title="Sell Signal", message="VWAP Crossover Sell Signal")
@@ -131,10 +132,10 @@ if isNewDay and not na(pdh)
     lineStyle = pdhlStyle == "Solid" ? line.style_solid : pdhlStyle == "Dotted" ? line.style_dotted : line.style_dashed
 
     if showPDHL
-        pdhLine := line.new(x1=prevDayOpenTime, y1=pdh, x2=time, y2=pdh, extend=extend.right, color=pdhColor, width=pdhlWidth, style=lineStyle)
-        pdlLine := line.new(x1=prevDayOpenTime, y1=pdl, x2=time, y2=pdl, extend=extend.right, color=pdlColor, width=pdhlWidth, style=lineStyle)
-        pdhLabel := label.new(x=prevDayOpenTime, y=pdh, text="PDH", style=label.style_label_right, color=pdhColor, textcolor=color.white, size=size.small)
-        pdlLabel := label.new(x=prevDayOpenTime, y=pdl, text="PDL", style=label.style_label_right, color=pdlColor, textcolor=color.white, size=size.small)
+        pdhLine := line.new(x1=prevDayOpenTime, y1=pdh, x2=time, y2=pdh, xloc=xloc.bar_time, extend=extend.right, color=pdhColor, width=pdhlWidth, style=lineStyle)
+        pdlLine := line.new(x1=prevDayOpenTime, y1=pdl, x2=time, y2=pdl, xloc=xloc.bar_time, extend=extend.right, color=pdlColor, width=pdhlWidth, style=lineStyle)
+        pdhLabel := label.new(x=prevDayOpenTime, y=pdh, text="PDH", xloc=xloc.bar_time, style=label.style_label_right, color=pdhColor, textcolor=color.white, size=size.small)
+        pdlLabel := label.new(x=prevDayOpenTime, y=pdl, text="PDL", xloc=xloc.bar_time, style=label.style_label_right, color=pdlColor, textcolor=color.white, size=size.small)
 
 bgcolor(inBullish ? bullishColor : bearishColor)
 var label infoPanel = na
