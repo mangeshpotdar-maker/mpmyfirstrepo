@@ -13,7 +13,6 @@ var G_PURNIMA = "Purnima Display"
 purnimaColor = input.color(color.new(color.green, 0), "Color", group = G_PURNIMA)
 var G_PANEL = "Info Panel"
 showInfoPanel = input.bool(true, "Show Phase Info Panel", group = G_PANEL)
-panelPosition = input.string("bottom-right", "Panel Position", options=["bottom-left", "top-right", "bottom-right"], group = G_PANEL)
 var G_VWAP = "VWAP"
 showVWAP = input.bool(true, "Show VWAP", group = G_VWAP)
 vwapColor = input.color(color.new(color.blue, 0), "VWAP Color", group = G_VWAP)
@@ -87,11 +86,14 @@ if isAmaFirst
 inBullish = nz(lastP_time, 0) > nz(lastA_time, 0)
 
 // Use EMA as a fallback for VWAP on charts without volume
-use_vwap = syminfo.has_volume
-vwapValue = use_vwap ? ta.vwap(hlc3) : ta.ema(close, 20)
+// On symbols without volume data, the built-in 'volume' variable returns 'na'.
+use_vwap = not na(volume)
+vwap_calc = ta.vwap(hlc3)
+ema_fallback = ta.ema(close, 20)
+vwapValue = use_vwap ? vwap_calc : ema_fallback
 smoothedVWAPValue = ta.ema(vwapValue, smoothedVWAPLength)
 
-plot(showVWAP ? vwapValue : na, use_vwap ? "VWAP" : "EMA (VWAP Fallback)", color=vwapColor, linewidth=vwapWidth)
+plot(showVWAP ? vwapValue : na, "VWAP / EMA Fallback", color=vwapColor, linewidth=vwapWidth)
 plot(showSmoothedVWAP ? smoothedVWAPValue : na, "Smoothed VWAP", color=smoothedVWAPColor, linewidth=vwapWidth)
 buySignal = ta.crossover(close, smoothedVWAPValue) and inBullish
 sellSignal = ta.crossunder(close, smoothedVWAPValue) and not inBullish
@@ -142,7 +144,7 @@ if showInfoPanel and barstate.islast
 
     label.delete(infoPanel)
 
-    infoPanel := label.new(x=bar_index, y=y_pos_for_event, yloc=yloc.price,
+    infoPanel := label.new(x=bar_index, y=y_pos_for_event + atr, yloc=yloc.price,
                            text=panelText, style=label.style_label_up,
                            color=panelColor, textcolor=color.white,
                            xloc=xloc.bar_index)
