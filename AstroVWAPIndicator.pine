@@ -6,7 +6,7 @@ indicator("Astro VWAP Indicator", "Astro VWAP", overlay=true)
 
 // --- Default Color Constants ---
 const color DEF_BULLISH_COLOR = color.new(#c8e6c9, 87)
-const color DEF_BEARISH_COLOR = color.new(#f20f22, 92)
+const color DEF_BEARISH_COLOR = color.new(#fccbcd, 92)
 const color DEF_PDHL_COLOR = #0000FF
 const color DEF_VWAP_UP_COLOR = #a5f411
 const color DEF_VWAP_DOWN_COLOR = #f20f22
@@ -253,18 +253,22 @@ var eventLabels = array.new_label()
 var signalLabels = array.new_label()
 
 if buySignal and showSignals
-    array.push(signalLabels, label.new(bar_index, close, "Buy", style=label.style_arrowup, color=color.new(color.green, 0), textcolor=color.new(color.green, 0), size=size.normal, yloc=yloc.belowbar, text_style=text.style_bold))
+    array.push(signalLabels, label.new(bar_index, close, "Buy", style=label.style_arrowup, color=color.new(color.green, 0), textcolor=color.new(color.green, 0), size=size.normal, yloc=yloc.belowbar))
 
 if sellSignal and showSignals
-    array.push(signalLabels, label.new(bar_index, close, "Sell", style=label.style_arrowdown, color=color.new(color.red, 0), textcolor=color.new(color.red, 0), size=size.normal, yloc=yloc.abovebar, text_style=text.style_bold))
+    array.push(signalLabels, label.new(bar_index, close, "Sell", style=label.style_arrowdown, color=color.new(color.red, 0), textcolor=color.new(color.red, 0), size=size.normal, yloc=yloc.abovebar))
 
-if vwapTurnUp and isBullishPhase
-    array.push(signalLabels, label.new(bar_index, close, "🔥 Reversal Point", style=label.style_label_down, color=color.new(color.green, 100), textcolor=color.new(color.green, 0), size=size.small, textalign=text.align_center, text_style=text.style_bold))
-    plotshape(vwapTurnUp, style=shape.pentagon, location=location.belowbar, color=color.new(color.green, 0), size=size.small)
+bullishReversalSignal = vwapTurnUp and isBullishPhase
+bearishReversalSignal = vwapTurnDown and isBearishPhase
 
-if vwapTurnDown and isBearishPhase
-    array.push(signalLabels, label.new(bar_index, close, "🔥 Reversal Point", style=label.style_label_up, color=color.new(color.red, 100), textcolor=color.new(color.red, 0), size=size.small, textalign=text.align_center, text_style=text.style_bold))
-    plotshape(vwapTurnDown, style=shape.pentagon, location=location.abovebar, color=color.new(color.red, 0), size=size.small)
+if bullishReversalSignal
+    array.push(signalLabels, label.new(bar_index, close, "🔥 Reversal Point", style=label.style_label_down, color=color.new(color.green, 100), textcolor=color.new(color.green, 0), size=size.small))
+
+if bearishReversalSignal
+    array.push(signalLabels, label.new(bar_index, close, "🔥 Reversal Point", style=label.style_label_up, color=color.new(color.red, 100), textcolor=color.new(color.red, 0), size=size.small))
+
+plotshape(bullishReversalSignal, style="diamond", location=location.belowbar, color=color.new(color.green, 0), size=size.small)
+plotshape(bearishReversalSignal, style="diamond", location=location.abovebar, color=color.new(color.red, 0), size=size.small)
 
 if array.size(signalLabels) > max_drawings
     label.delete(array.shift(signalLabels))
@@ -379,21 +383,21 @@ if showProximityTable
     bullishBearishEmoji = isBullishPhase ? "🟢" : "🔴"
     dayName = str.tostring(dayofweek)
 
-    table.cell(infoTable, 0, 0, "Symbol", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
+    table.cell(infoTable, 0, 0, "Symbol", text_halign="left", text_size=size.small, text_color=#000000)
     table.cell(infoTable, 1, 0, syminfo.ticker, text_halign="center")
     nextEventColor = nextEventName == "Purnima" ? color.green : color.red
-    table.cell(infoTable, 0, 1, "Next Event", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 1, nextEventName, text_halign="center", text_color=nextEventColor, text_style=text.style_bold)
-    table.cell(infoTable, 0, 2, "Days to Event", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
+    table.cell(infoTable, 0, 1, "Next Event", text_halign="left", text_size=size.small, text_color=#000000)
+    table.cell(infoTable, 1, 1, nextEventName, text_halign="center", text_color=nextEventColor)
+    table.cell(infoTable, 0, 2, "Days to Event", text_halign="left", text_size=size.small, text_color=#000000)
     table.cell(infoTable, 1, 2, str.tostring(int(daysToNextEvent)), text_halign="center")
-    table.cell(infoTable, 0, 3, "Current Period", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
+    table.cell(infoTable, 0, 3, "Current Period", text_halign="left", text_size=size.small, text_color=#000000)
     table.cell(infoTable, 1, 3, bullishBearishEmoji, text_halign="center", text_size=size.small)
-    table.cell(infoTable, 0, 4, "Close", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
+    table.cell(infoTable, 0, 4, "Close", text_halign="left", text_size=size.small, text_color=#000000)
     table.cell(infoTable, 1, 4, str.tostring(int(close)), text_halign="center")
-    table.cell(infoTable, 0, 5, "VWAP", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
+    table.cell(infoTable, 0, 5, "VWAP", text_halign="left", text_size=size.small, text_color=#000000)
     table.cell(infoTable, 1, 5, str.tostring(int(vwapValue)), text_halign="center")
-    table.cell(infoTable, 0, 6, "Proximity", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 6, str.tostring(int(close - vwapValue)), text_halign=text.align_center)
+    table.cell(infoTable, 0, 6, "Proximity", text_halign="left", text_size=size.small, text_color=#000000)
+    table.cell(infoTable, 1, 6, str.tostring(int(close - vwapValue)), text_halign="center")
 
 // --- High Volume Candle Coloring ---
 volumeSma = ta.sma(volume, 10)
