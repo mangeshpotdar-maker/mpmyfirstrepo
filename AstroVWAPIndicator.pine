@@ -5,15 +5,15 @@ indicator("Astro VWAP Indicator", "Astro VWAP", overlay=true)
 // @description Holds all astrological data and settings.
 
 // --- Default Color Constants ---
-const color DEF_BULLISH_COLOR = #008000E6
-const color DEF_BEARISH_COLOR = #FF0000E6
+const color DEF_BULLISH_COLOR = #c8e6c9
+const color DEF_BEARISH_COLOR = #fccbcd
 const color DEF_PDHL_COLOR = #0000FF
 const color DEF_VWAP_UP_COLOR = #006400
 const color DEF_VWAP_DOWN_COLOR = #8B0000
-const color DEF_AMAVASYA_LINE_COLOR = #FF0000
-const color DEF_PURNIMA_LINE_COLOR = #008000
-const color DEF_PUSHYA_LINE_COLOR = #FFFF00
-const color DEF_ECLIPSE_LINE_COLOR = #808080
+const color DEF_AMAVASYA_LINE_COLOR = #FF000080
+const color DEF_PURNIMA_LINE_COLOR = #00800080
+const color DEF_PUSHYA_LINE_COLOR = #FFFF0080
+const color DEF_ECLIPSE_LINE_COLOR = #80808080
 
 // --- Main Settings ---
 showPurnimaAmavasya = input.bool(true, title="Show Purnima/Amavasya Events", group="Display Settings")
@@ -44,7 +44,6 @@ lineWidth = input.int(2, title="Line Width", group="Display Settings")
 
 // --- Table Settings ---
 tablePosition = input.string(position.bottom_right, "Table Position", options=[position.top_right, position.bottom_right, position.top_left, position.bottom_left], group="Table Settings")
-tableBgColor = input.color(#cccccc, "Table BG Color", group="Table Settings")
 tableBorderColor = input.color(#000000, "Table Border Color", group="Table Settings")
 
 // --- Amavasya Dates ---
@@ -186,7 +185,7 @@ smoothedMonthlyAVWAP = switch monthlySmoothingType
 vwapSlope = smoothedVwapValue - smoothedVwapValue[1]
 vwapColor = vwapSlope > 0 ? vwapUpColor : vwapDownColor
 plot(showVWAP ? vwapValue : na, title="VWAP", color=#0000FF)
-plot(showSmoothedVWAP ? smoothedVwapValue : na, title="Smoothed VWAP", color=vwapColor)
+plot(showSmoothedVWAP ? smoothedVwapValue : na, title="Smoothed VWAP", color=vwapColor, linewidth=2)
 
 // Plot Anchored VWAPs
 plot(showWeeklyAVWAP ? smoothedWeeklyAVWAP : na, title="Weekly AVWAP", color=weeklyAVWAPColor)
@@ -214,8 +213,8 @@ buySignal = buy_signal_raw[1] and isBullishPhase
 sellSignal = sell_signal_raw[1] and isBearishPhase
 
 // --- Plotting Signals ---
-plotshape(showSignals and buySignal, style=shape.triangleup, location=location.belowbar, color=#008000, size=size.tiny, title="Buy Signal")
-plotshape(showSignals and sellSignal, style=shape.triangledown, location=location.abovebar, color=#FF0000, size=size.tiny, title="Sell Signal")
+plotshape(showSignals and buySignal, style=shape.arrowup, location=location.belowbar, color=#008000, size=size.tiny, title="Buy Signal", text="Buy")
+plotshape(showSignals and sellSignal, style=shape.arrowdown, location=location.abovebar, color=#FF0000, size=size.tiny, title="Sell Signal", text="Sell")
 
 // --- END --- Signals Block
 
@@ -228,7 +227,9 @@ plotshape(showSignals and sellSignal, style=shape.triangledown, location=locatio
 var float prevWeekHigh = na
 var float prevWeekLow = na
 if isNewWeek
-    [prevWeekHigh, prevWeekLow] = request.security(syminfo.tickerid, "W", [high[1], low[1]])
+    securityResult = request.security(syminfo.tickerid, "W", [high[1], low[1]])
+    prevWeekHigh := securityResult[0]
+    prevWeekLow := securityResult[1]
 
 // Event plotting logic
 const int max_drawings = 50
@@ -312,8 +313,8 @@ if isNewDay and showPDHL
     label.delete(pdlLabel)
 
     // Create new lines and labels
-    pdhLine := line.new(bar_index - 1, pdh, bar_index, pdh, extend=extend.right, color=pdhlColor, width=pdhlWidth)
-    pdlLine := line.new(bar_index - 1, pdl, bar_index, pdl, extend=extend.right, color=pdhlColor, width=pdhlWidth)
+    pdhLine := line.new(bar_index - 1, pdh, bar_index, pdh, extend=extend.right, color=pdhlColor, width=pdhlWidth, style=line.style_dashed)
+    pdlLine := line.new(bar_index - 1, pdl, bar_index, pdl, extend=extend.right, color=pdhlColor, width=pdhlWidth, style=line.style_dashed)
     pdhLabel := label.new(bar_index, pdh, "PDH", style=label.style_none, textcolor=pdhlColor)
     pdlLabel := label.new(bar_index, pdl, "PDL", style=label.style_none, textcolor=pdhlColor)
 
@@ -321,7 +322,8 @@ if isNewDay and showPDHL
 var table infoTable = table.new(tablePosition, 2, 9, border_width=2, border_color=tableBorderColor)
 if showProximityTable
     table.clear(infoTable, 0, 0, 1, 8) // Clear table on each bar to apply new styles
-    table.set_bgcolor(infoTable, tableBgColor)
+    dynamicTableBgColor = isBullishPhase ? color.new(#c8e6c9, 10) : color.new(#fccbcd, 10)
+    table.set_bgcolor(infoTable, dynamicTableBgColor)
 
     // Find next event
     nextAmavasya = array.get(amavasyaDates, amavasyaIdx)
@@ -340,24 +342,24 @@ if showProximityTable
     bullishBearishEmoji = isBullishPhase ? "🟢" : "🔴"
     dayName = str.tostring(dayofweek)
 
-    table.cell(infoTable, 0, 0, "Symbol", text_halign=text.align_left, text_size=size.normal, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 0, syminfo.ticker, text_halign=text.align_center)
-    table.cell(infoTable, 0, 1, "Timeframe", text_halign=text.align_left, text_size=size.normal, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 1, str.tostring(int(timeframe.in_seconds() / 60)), text_halign=text.align_center)
-    table.cell(infoTable, 0, 2, "Day", text_halign=text.align_left, text_size=size.normal, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 2, dayName, text_halign=text.align_center)
-    table.cell(infoTable, 0, 3, "Next Event", text_halign=text.align_left, text_size=size.normal, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 3, nextEventName, text_halign=text.align_center)
-    table.cell(infoTable, 0, 4, "Days to Event", text_halign=text.align_left, text_size=size.normal, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 4, str.tostring(int(daysToNextEvent)), text_halign=text.align_center)
-    table.cell(infoTable, 0, 5, "Current Period", text_halign=text.align_left, text_size=size.normal, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 5, bullishBearishEmoji, text_halign=text.align_center, text_size=size.huge)
-    table.cell(infoTable, 0, 6, "Close", text_halign=text.align_left, text_size=size.normal, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 6, str.tostring(int(close)), text_halign=text.align_center)
-    table.cell(infoTable, 0, 7, "VWAP", text_halign=text.align_left, text_size=size.normal, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 7, str.tostring(int(vwapValue)), text_halign=text.align_center)
-    table.cell(infoTable, 0, 8, "Proximity", text_halign=text.align_left, text_size=size.normal, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 8, str.tostring(int(close - vwapValue)), text_halign=text.align_center)
+    table.cell(infoTable, 0, 0, "Symbol", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
+    table.cell(infoTable, 1, 0, syminfo.ticker, text_halign="center")
+    table.cell(infoTable, 0, 1, "Timeframe", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
+    table.cell(infoTable, 1, 1, str.tostring(int(timeframe.in_seconds() / 60)), text_halign="center")
+    table.cell(infoTable, 0, 2, "Day", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
+    table.cell(infoTable, 1, 2, dayName, text_halign="center")
+    table.cell(infoTable, 0, 3, "Next Event", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
+    table.cell(infoTable, 1, 3, nextEventName, text_halign="center")
+    table.cell(infoTable, 0, 4, "Days to Event", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
+    table.cell(infoTable, 1, 4, str.tostring(int(daysToNextEvent)), text_halign="center")
+    table.cell(infoTable, 0, 5, "Current Period", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
+    table.cell(infoTable, 1, 5, bullishBearishEmoji, text_halign="center", text_size=size.huge)
+    table.cell(infoTable, 0, 6, "Close", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
+    table.cell(infoTable, 1, 6, str.tostring(int(close)), text_halign="center")
+    table.cell(infoTable, 0, 7, "VWAP", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
+    table.cell(infoTable, 1, 7, str.tostring(int(vwapValue)), text_halign="center")
+    table.cell(infoTable, 0, 8, "Proximity", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
+    table.cell(infoTable, 1, 8, str.tostring(int(close - vwapValue)), text_halign="center")
 
 // --- High Volume Candle Coloring ---
 volumeSma = ta.sma(volume, 10)
