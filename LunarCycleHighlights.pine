@@ -118,7 +118,7 @@ alertcondition(sellSignal, title="Sell Signal", message="VWAP Crossover Sell Sig
 // -----------------------------------------------------------------------------
 // === Previous Day High/Low Section ===
 // -----------------------------------------------------------------------------
-[pdh, pdl] = request.security(syminfo.tickerid, "D", [high[1], low[1]])
+[pdh, pdl, prevDayOpenTime] = request.security(syminfo.tickerid, "D", [high[1], low[1], time[1]])
 
 var line pdhLine = na
 var line pdlLine = na
@@ -126,9 +126,6 @@ var label pdhLabel = na
 var label pdlLabel = na
 
 isNewDay = ta.change(time("D")) != 0
-var int currentDayOpenTime = na
-if isNewDay
-    currentDayOpenTime := time
 
 if isNewDay and not na(pdh)
     if not na(pdhLine)
@@ -143,14 +140,10 @@ if isNewDay and not na(pdh)
     lineStyle = pdhlStyle == "Solid" ? line.style_solid : pdhlStyle == "Dotted" ? line.style_dotted : line.style_dashed
 
     if showPDHL
-        pdhLine := line.new(x1=currentDayOpenTime, y1=pdh, x2=time, y2=pdh, xloc=xloc.bar_time, extend=extend.none, color=pdhColor, width=pdhlWidth, style=lineStyle)
-        pdlLine := line.new(x1=currentDayOpenTime, y1=pdl, x2=time, y2=pdl, xloc=xloc.bar_time, extend=extend.none, color=pdlColor, width=pdhlWidth, style=lineStyle)
-        pdhLabel := label.new(x=currentDayOpenTime, y=pdh, text="PDH", xloc=xloc.bar_time, style=label.style_label_right, color=pdhColor, textcolor=color.white, size=size.small)
-        pdlLabel := label.new(x=currentDayOpenTime, y=pdl, text="PDL", xloc=xloc.bar_time, style=label.style_label_right, color=pdlColor, textcolor=color.white, size=size.small)
-
-if not isNewDay and showPDHL and barstate.isrealtime
-    line.set_x2(pdhLine, time)
-    line.set_x2(pdlLine, time)
+        pdhLine := line.new(x1=prevDayOpenTime, y1=pdh, x2=prevDayOpenTime, y2=pdh, xloc=xloc.bar_time, extend=extend.right, color=pdhColor, width=pdhlWidth, style=lineStyle)
+        pdlLine := line.new(x1=prevDayOpenTime, y1=pdl, x2=prevDayOpenTime, y2=pdl, xloc=xloc.bar_time, extend=extend.right, color=pdlColor, width=pdhlWidth, style=lineStyle)
+        pdhLabel := label.new(x=prevDayOpenTime, y=pdh, text="PDH", xloc=xloc.bar_time, style=label.style_label_right, color=pdhColor, textcolor=color.white, size=size.small)
+        pdlLabel := label.new(x=prevDayOpenTime, y=pdl, text="PDL", xloc=xloc.bar_time, style=label.style_label_right, color=pdlColor, textcolor=color.white, size=size.small)
 
 bgcolor(inBullish ? bullishColor : bearishColor)
 
