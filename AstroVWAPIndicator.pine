@@ -13,22 +13,22 @@ showVWAP = input.bool(true, title="Show VWAP", group="Display Settings")
 showSmoothedVWAP = input.bool(true, title="Show Smoothed VWAP", group="Display Settings")
 showSignals = input.bool(true, title="Show Buy/Sell Signals", group="Display Settings")
 showBgColor = input.bool(true, title="Show Background Coloring", group="Display Settings")
-bullishColor = input.color(color.new(color.green, 90), title="Bullish Color", group="Display Settings")
-bearishColor = input.color(color.new(color.red, 90), title="Bearish Color", group="Display Settings")
+bullishColor = input.color(color.green, title="Bullish Color", group="Display Settings")
+bearishColor = input.color(color.red, title="Bearish Color", group="Display Settings")
 showPDHL = input.bool(true, title="Show Previous Day High/Low", group="Display Settings")
-pdhlColor = input.color(color.new(color.blue, 0), title="PDHL Color", group="Display Settings")
+pdhlColor = input.color(color.blue, title="PDHL Color", group="Display Settings")
 pdhlWidth = input.int(2, title="PDHL Width", group="Display Settings")
 showProximityTable = input.bool(true, title="Show VWAP Proximity Table", group="Display Settings")
 colorHighVolume = input.bool(true, title="Color High Volume Candles", group="Display Settings")
-vwapUpColor = input.color(color.new(color.darkgreen, 0), title="VWAP Up Color", group="VWAP Settings")
-vwapDownColor = input.color(color.new(color.darkred, 0), title="VWAP Down Color", group="VWAP Settings")
+vwapUpColor = input.color(color.darkgreen, title="VWAP Up Color", group="VWAP Settings")
+vwapDownColor = input.color(color.darkred, title="VWAP Down Color", group="VWAP Settings")
 
 // --- Vertical Line Settings ---
 showVerticalLines = input.bool(true, title="Show Vertical Event Lines", group="Display Settings")
-amavasyaLineColor = input.color(color.new(color.red, 0), title="Amavasya Line Color", group="Display Settings")
-purnimaLineColor = input.color(color.new(color.green, 0), title="Purnima Line Color", group="Display Settings")
-pushyaLineColor = input.color(color.new(color.yellow, 0), title="Pushya Nakshatra Line Color", group="Display Settings")
-eclipseLineColor = input.color(color.new(color.gray, 0), title="Eclipse/Solstice Line Color", group="Display Settings")
+amavasyaLineColor = input.color(color.red, title="Amavasya Line Color", group="Display Settings")
+purnimaLineColor = input.color(color.green, title="Purnima Line Color", group="Display Settings")
+pushyaLineColor = input.color(color.yellow, title="Pushya Nakshatra Line Color", group="Display Settings")
+eclipseLineColor = input.color(color.gray, title="Eclipse/Solstice Line Color", group="Display Settings")
 lineWidth = input.int(2, title="Line Width", group="Display Settings")
 
 // --- Amavasya Dates ---
@@ -114,7 +114,7 @@ smoothedVwapValue = switch smoothingType
 // --- Plotting ---
 vwapSlope = smoothedVwapValue - smoothedVwapValue[1]
 vwapColor = vwapSlope > 0 ? vwapUpColor : vwapDownColor
-plot(showVWAP ? vwapValue : na, title="VWAP", color=color.blue)
+plot(showVWAP ? vwapValue : na, title="VWAP", color=color.new(color.blue, 0))
 plot(showSmoothedVWAP ? smoothedVwapValue : na, title="Smoothed VWAP", color=vwapColor)
 
 // --- VWAP Turning Points ---
