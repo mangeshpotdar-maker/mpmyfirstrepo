@@ -227,9 +227,8 @@ plotshape(showSignals and sellSignal, style=shape.arrowdown, location=location.a
 var float prevWeekHigh = na
 var float prevWeekLow = na
 if isNewWeek
-    securityResult = request.security(syminfo.tickerid, "W", [high[1], low[1]])
-    prevWeekHigh := securityResult[0]
-    prevWeekLow := securityResult[1]
+    prevWeekHigh := request.security(syminfo.tickerid, "W", high[1])
+    prevWeekLow := request.security(syminfo.tickerid, "W", low[1])
 
 // Event plotting logic
 const int max_drawings = 50
@@ -304,7 +303,8 @@ var label pdhLabel = na
 var label pdlLabel = na
 isNewDay = ta.change(time("D")) != 0
 if isNewDay and showPDHL
-    [pdh, pdl] = request.security(syminfo.tickerid, "D", [high[1], low[1]])
+    pdh = request.security(syminfo.tickerid, "D", high[1])
+    pdl = request.security(syminfo.tickerid, "D", low[1])
 
     // Delete old lines and labels
     line.delete(pdhLine)
@@ -342,24 +342,24 @@ if showProximityTable
     bullishBearishEmoji = isBullishPhase ? "🟢" : "🔴"
     dayName = str.tostring(dayofweek)
 
-    table.cell(infoTable, 0, 0, "Symbol", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 0, syminfo.ticker, text_halign="center")
-    table.cell(infoTable, 0, 1, "Timeframe", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 1, str.tostring(int(timeframe.in_seconds() / 60)), text_halign="center")
-    table.cell(infoTable, 0, 2, "Day", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 2, dayName, text_halign="center")
-    table.cell(infoTable, 0, 3, "Next Event", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 3, nextEventName, text_halign="center")
-    table.cell(infoTable, 0, 4, "Days to Event", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 4, str.tostring(int(daysToNextEvent)), text_halign="center")
-    table.cell(infoTable, 0, 5, "Current Period", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 5, bullishBearishEmoji, text_halign="center", text_size=size.huge)
-    table.cell(infoTable, 0, 6, "Close", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 6, str.tostring(int(close)), text_halign="center")
-    table.cell(infoTable, 0, 7, "VWAP", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 7, str.tostring(int(vwapValue)), text_halign="center")
-    table.cell(infoTable, 0, 8, "Proximity", text_halign="left", text_size=size.small, text_color=#000000, text_style=text.style_bold)
-    table.cell(infoTable, 1, 8, str.tostring(int(close - vwapValue)), text_halign="center")
+    table.cell(infoTable, 0, 0, "Symbol", text_halign=text.align_left, text_size=size.small, text_color=#000000)
+    table.cell(infoTable, 1, 0, syminfo.ticker, text_halign=text.align_center)
+    table.cell(infoTable, 0, 1, "Timeframe", text_halign=text.align_left, text_size=size.small, text_color=#000000)
+    table.cell(infoTable, 1, 1, str.tostring(int(timeframe.in_seconds() / 60)), text_halign=text.align_center)
+    table.cell(infoTable, 0, 2, "Day", text_halign=text.align_left, text_size=size.small, text_color=#000000)
+    table.cell(infoTable, 1, 2, dayName, text_halign=text.align_center)
+    table.cell(infoTable, 0, 3, "Next Event", text_halign=text.align_left, text_size=size.small, text_color=#000000)
+    table.cell(infoTable, 1, 3, nextEventName, text_halign=text.align_center)
+    table.cell(infoTable, 0, 4, "Days to Event", text_halign=text.align_left, text_size=size.small, text_color=#000000)
+    table.cell(infoTable, 1, 4, str.tostring(int(daysToNextEvent)), text_halign=text.align_center)
+    table.cell(infoTable, 0, 5, "Current Period", text_halign=text.align_left, text_size=size.small, text_color=#000000)
+    table.cell(infoTable, 1, 5, bullishBearishEmoji, text_halign=text.align_center, text_size=size.huge)
+    table.cell(infoTable, 0, 6, "Close", text_halign=text.align_left, text_size=size.small, text_color=#000000)
+    table.cell(infoTable, 1, 6, str.tostring(int(close)), text_halign=text.align_center)
+    table.cell(infoTable, 0, 7, "VWAP", text_halign=text.align_left, text_size=size.small, text_color=#000000)
+    table.cell(infoTable, 1, 7, str.tostring(int(vwapValue)), text_halign=text.align_center)
+    table.cell(infoTable, 0, 8, "Proximity", text_halign=text.align_left, text_size=size.small, text_color=#000000)
+    table.cell(infoTable, 1, 8, str.tostring(int(close - vwapValue)), text_halign=text.align_center)
 
 // --- High Volume Candle Coloring ---
 volumeSma = ta.sma(volume, 10)
