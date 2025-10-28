@@ -99,8 +99,14 @@ plot(showVWAP ? vwapValue : na, "VWAP", color=vwapColor, linewidth=vwapWidth)
 plot(showSmoothedVWAP ? smoothedVWAPValue : na, "Smoothed VWAP", color=smoothedVWAPColor, linewidth=vwapWidth)
 buySignal = ta.crossover(close, smoothedVWAPValue) and inBullish
 sellSignal = ta.crossunder(close, smoothedVWAPValue) and not inBullish
-plotshape(showCrossoverSignals and buySignal, style=shape.triangleup, location=location.belowbar, color=buySignalColor, size=size.small, text=showSignalText ? "Buy" : na)
-plotshape(showCrossoverSignals and sellSignal, style=shape.triangledown, location=location.abovebar, color=sellSignalColor, size=size.small, text=showSignalText ? "Sell" : na)
+
+// Plot signals with text if enabled. Separate plotshape calls are needed because the 'text' argument must be a constant string.
+plotshape(showCrossoverSignals and showSignalText and buySignal, text='Buy', style=shape.triangleup, location=location.belowbar, color=buySignalColor, size=size.small)
+plotshape(showCrossoverSignals and showSignalText and sellSignal, text='Sell', style=shape.triangledown, location=location.abovebar, color=sellSignalColor, size=size.small)
+
+// Plot signals without text if disabled
+plotshape(showCrossoverSignals and not showSignalText and buySignal, style=shape.triangleup, location=location.belowbar, color=buySignalColor, size=size.small)
+plotshape(showCrossoverSignals and not showSignalText and sellSignal, style=shape.triangledown, location=location.abovebar, color=sellSignalColor, size=size.small)
 
 alertcondition(buySignal, title="Buy Signal", message="VWAP Crossover Buy Signal")
 alertcondition(sellSignal, title="Sell Signal", message="VWAP Crossover Sell Signal")
