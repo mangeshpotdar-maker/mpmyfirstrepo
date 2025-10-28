@@ -25,10 +25,10 @@ vwapDownColor = input.color(color.new(color.darkred, 0), title="VWAP Down Color"
 
 // --- Vertical Line Settings ---
 showVerticalLines = input.bool(true, title="Show Vertical Event Lines", group="Display Settings")
-amavasyaLineColor = input.color(color.red, title="Amavasya Line Color", group="Display Settings")
-purnimaLineColor = input.color(color.green, title="Purnima Line Color", group="Display Settings")
-pushyaLineColor = input.color(color.yellow, title="Pushya Nakshatra Line Color", group="Display Settings")
-eclipseLineColor = input.color(color.gray, title="Eclipse/Solstice Line Color", group="Display Settings")
+amavasyaLineColor = input.color(color.new(color.red, 0), title="Amavasya Line Color", group="Display Settings")
+purnimaLineColor = input.color(color.new(color.green, 0), title="Purnima Line Color", group="Display Settings")
+pushyaLineColor = input.color(color.new(color.yellow, 0), title="Pushya Nakshatra Line Color", group="Display Settings")
+eclipseLineColor = input.color(color.new(color.gray, 0), title="Eclipse/Solstice Line Color", group="Display Settings")
 lineWidth = input.int(2, title="Line Width", group="Display Settings")
 
 // --- Amavasya Dates ---
