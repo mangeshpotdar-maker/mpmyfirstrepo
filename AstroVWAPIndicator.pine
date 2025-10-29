@@ -83,14 +83,12 @@ var purnimaIdx = 0
 var amavasyaIdx = 0
 
 if array.size(purnimaDates) > 0
-while purnimaIdx < array.size(purnimaDates) and array.get(purnimaDates, purnimaIdx) < time
-purnimaIdx := purnimaIdx + 1
-purnimaIdx
+    while purnimaIdx < array.size(purnimaDates) and array.get(purnimaDates, purnimaIdx) < time
+        purnimaIdx := purnimaIdx + 1
 
 if array.size(amavasyaDates) > 0
-while amavasyaIdx < array.size(amavasyaDates) and array.get(amavasyaDates, amavasyaIdx) < time
-amavasyaIdx := amavasyaIdx + 1
-amavasyaIdx
+    while amavasyaIdx < array.size(amavasyaDates) and array.get(amavasyaDates, amavasyaIdx) < time
+        amavasyaIdx := amavasyaIdx + 1
 
 lastPurnima = purnimaIdx > 0 ? array.get(purnimaDates, purnimaIdx - 1) : na
 lastAmavasya = amavasyaIdx > 0 ? array.get(amavasyaDates, amavasyaIdx - 1) : na
