@@ -283,10 +283,10 @@ bullishReversalSignal = vwapTurnUp and isBullishPhase
 bearishReversalSignal = vwapTurnDown and isBearishPhase
 
 if bullishReversalSignal
-    array.push(signalLabels, label.new(bar_index, low, '🔥 Reversal Point', style = label.style_label_down, color = color.new(color.green, 100), textcolor = color.new(color.green, 0), size = size.small))
+    array.push(signalLabels, label.new(bar_index, na, '🔥', yloc = yloc.belowbar, style = label.style_label_up, color = color.new(color.green, 100), textcolor = color.new(color.green, 0), size = size.small))
 
 if bearishReversalSignal
-    array.push(signalLabels, label.new(bar_index, high, '🔥 Reversal Point', style = label.style_label_up, color = color.new(color.red, 100), textcolor = color.new(color.red, 0), size = size.small))
+    array.push(signalLabels, label.new(bar_index, na, '🔥', yloc = yloc.abovebar, style = label.style_label_down, color = color.new(color.red, 100), textcolor = color.new(color.red, 0), size = size.small))
 
 plotshape(bullishReversalSignal, style = shape.diamond, location = location.belowbar, color = color.new(color.green, 0), size = size.small)
 plotshape(bearishReversalSignal, style = shape.diamond, location = location.abovebar, color = color.new(color.red, 0), size = size.small)
@@ -438,6 +438,15 @@ table.cell(infoTable, 1, 6, str.tostring(int(proximityValue)), text_halign = 'ce
 volumeSma = ta.sma(volume, 10)
 highVolume = volume > volumeSma * 5
 barcolor(colorHighVolume and highVolume ? #FFA500 : na)
+
+// --- Flashing Signal Alert ---
+var int barsSinceSignal = na
+if buySignal or sellSignal
+    barsSinceSignal := 0
+if not na(barsSinceSignal)
+    barsSinceSignal := barsSinceSignal + 1
+flashSignalCondition = not na(barsSinceSignal) and barsSinceSignal <= 3 and bar_index % 2 == 0
+barcolor(flashSignalCondition ? color.new(color.yellow, 50) : na)
 // --- END --- Plotting Block
 
 // --- START --- Alerts Block
