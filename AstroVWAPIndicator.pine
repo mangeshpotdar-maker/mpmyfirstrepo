@@ -24,6 +24,7 @@ showVWAP = input.bool(false, title = 'Show VWAP', group = 'Display Settings')
 showSmoothedVWAP = input.bool(true, title = 'Show Smoothed VWAP', group = 'Display Settings')
 showSignals = input.bool(true, title = 'Show Buy/Sell Signals', group = 'Display Settings')
 showBuySellAlerts = input.bool(false, title = 'Show Alerts based on Crossover', group = 'Display Settings')
+showReversalAlerts = input.bool(true, title = 'Show Alerts based VWAP Reversal', group = 'Display Settings')
 showBgColor = input.bool(false, title = 'Show Background Coloring', group = 'Display Settings')
 bullishColor = input.color(DEF_BULLISH_COLOR, title = 'Bullish Color', group = 'Display Settings')
 bearishColor = input.color(DEF_BEARISH_COLOR, title = 'Bearish Color', group = 'Display Settings')
@@ -457,7 +458,7 @@ barcolor(flashSignalCondition ? color.new(color.yellow, 50) : na)
 
 alertcondition(buySignal and showBuySellAlerts, title = 'Buy Signal', message = 'Buy Signal: Close crossed above Smoothed VWAP in Bullish Phase')
 alertcondition(sellSignal and showBuySellAlerts, title = 'Sell Signal', message = 'Sell Signal: Close crossed below Smoothed VWAP in Bearish Phase')
-alertcondition(vwapTurnUp and isBullishPhase, title = 'Bullish Reversal', message = 'Bullish Reversal: Smoothed VWAP turned up in Bullish Phase')
-alertcondition(vwapTurnDown and isBearishPhase, title = 'Bearish Reversal', message = 'Bearish Reversal: Smoothed VWAP turned down in Bearish Phase')
+alertcondition(vwapTurnUp and isBullishPhase and showReversalAlerts, title = 'Bullish Reversal', message = 'Bullish Reversal: Smoothed VWAP turned up in Bullish Phase')
+alertcondition(vwapTurnDown and isBearishPhase and showReversalAlerts, title = 'Bearish Reversal', message = 'Bearish Reversal: Smoothed VWAP turned down in Bearish Phase')
 
 // --- END --- Alerts Block
