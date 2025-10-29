@@ -44,9 +44,9 @@ lineWidth = input.int(2, title = 'Line Width', group = 'Display Settings')
 
 // --- Day Separator Settings ---
 showDaySeparator = input.bool(true, title = 'Show Day Separator', group = 'Display Settings')
-separatorColor = input.color(color.new(color.gray, 50), title = 'Separator Color', group = 'Display Settings')
-separatorStyle = input.string(line.style_dotted, 'Separator Style', options = [line.style_solid, line.style_dotted, line.style_dashed], group = 'Display Settings')
-separatorWidth = input.int(1, title = 'Separator Width', group = 'Display Settings')
+separatorColor = input.color(color.new(#787b86, 0), title = 'Separator Color', group = 'Display Settings')
+separatorStyle = input.string(line.style_solid, 'Separator Style', options = [line.style_solid, line.style_dotted, line.style_dashed], group = 'Display Settings')
+separatorWidth = input.int(2, title = 'Separator Width', group = 'Display Settings')
 
 // --- Table Settings ---
 tablePosition = input.string(position.bottom_right, 'Table Position', options = [position.top_right, position.bottom_right, position.top_left, position.bottom_left], group = 'Table Settings')
@@ -258,9 +258,13 @@ sellSignal = sell_signal_raw[1] and isBearishPhase
 prevWeekHigh = request.security(syminfo.tickerid, 'W', high[1], lookahead = barmerge.lookahead_on)
 prevWeekLow = request.security(syminfo.tickerid, 'W', low[1], lookahead = barmerge.lookahead_on)
 
+// Fallback for positioning if weekly data is not available
+stableHigh = na(prevWeekHigh) ? ta.highest(high, 200) : prevWeekHigh
+stableLow = na(prevWeekLow) ? ta.lowest(low, 200) : prevWeekLow
+
 // Define y-coordinates for labels
-yPosAbove = prevWeekHigh + 200 * syminfo.mintick
-yPosBelow = prevWeekLow - 200 * syminfo.mintick
+yPosAbove = stableHigh + 200 * syminfo.mintick
+yPosBelow = stableLow - 200 * syminfo.mintick
 
 
 // Event plotting logic
@@ -270,10 +274,10 @@ var eventLabels = array.new_label()
 var signalLabels = array.new_label()
 
 if buySignal and showSignals
-    array.push(signalLabels, label.new(bar_index, close, 'Buy', style = label.style_arrowup, color = color.new(color.green, 0), textcolor = color.new(color.green, 0), size = size.large, yloc = yloc.belowbar))
+    array.push(signalLabels, label.new(bar_index, low, '🚀', style = label.style_none, size = size.large, yloc = yloc.belowbar))
 
 if sellSignal and showSignals
-    array.push(signalLabels, label.new(bar_index, close, 'Sell', style = label.style_arrowdown, color = color.new(color.red, 0), textcolor = color.new(color.red, 0), size = size.large, yloc = yloc.abovebar))
+    array.push(signalLabels, label.new(bar_index, high, '💥', style = label.style_none, size = size.large, yloc = yloc.abovebar))
 
 bullishReversalSignal = vwapTurnUp and isBullishPhase
 bearishReversalSignal = vwapTurnDown and isBearishPhase
