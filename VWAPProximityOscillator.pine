@@ -1,0 +1,36 @@
+//@version=5
+indicator('VWAP Proximity Oscillator', 'VWAP Proximity', overlay = false)
+
+// --- START --- VWAP Block
+// @description Calculates the VWAP and smoothed VWAP.
+
+// --- Inputs ---
+vwapPeriod = input.int(5, title = 'VWAP Period', group = 'VWAP Settings')
+smoothingType = input.string('EMA', title = 'Smoothing Type', options = ['EMA', 'WMA', 'SMA', 'HMA'], group = 'VWAP Settings')
+smoothingLength = input.int(5, title = 'Smoothing Length', group = 'VWAP Settings')
+
+// --- Calculations ---
+// MVWAP calculation with EMA fallback
+vwap_calculation = ta.sma(hlc3 * volume, vwapPeriod) / ta.sma(volume, vwapPeriod)
+ema_fallback = ta.ema(hlc3, vwapPeriod)
+vwapValue = not na(volume) ? vwap_calculation : ema_fallback
+
+// Smoothed VWAP calculation
+emaSmoothed = ta.ema(vwapValue, smoothingLength)
+wmaSmoothed = ta.wma(vwapValue, smoothingLength)
+smaSmoothed = ta.sma(vwapValue, smoothingLength)
+hmaSmoothed = ta.hma(vwapValue, smoothingLength)
+
+smoothedVwapValue = switch smoothingType
+    'EMA' => emaSmoothed
+    'WMA' => wmaSmoothed
+    'SMA' => smaSmoothed
+    'HMA' => hmaSmoothed
+
+// --- Proximity Calculation ---
+proximityValue = close - smoothedVwapValue
+
+// --- Plotting ---
+proximityColor = proximityValue >= 0 ? color.new(color.green, 20) : color.new(color.red, 20)
+plot(proximityValue, title = 'Proximity', style = plot.style_columns, color = proximityColor)
+hline(0, 'Zero Line', color = color.gray, linestyle = hline.style_dashed)
