@@ -98,18 +98,14 @@ lastAmavasya = amavasyaIdx > 0 ? array.get(amavasyaDates, amavasyaIdx - 1) : na
 // Bearish phase: Amavasya to Purnima (Red)
 var color bgColor = na
 if not na(lastPurnima) and not na(lastAmavasya)
-if lastPurnima > lastAmavasya
-bgColor := bullishColor
-bgColor
-else
-bgColor := bearishColor
-bgColor
+    if lastPurnima > lastAmavasya
+        bgColor := bullishColor
+    else
+        bgColor := bearishColor
 else if na(lastPurnima) and not na(lastAmavasya)
-bgColor := bearishColor
-bgColor
+    bgColor := bearishColor
 else if not na(lastPurnima) and na(lastAmavasya)
-bgColor := bullishColor
-bgColor
+    bgColor := bullishColor
 
 
 bgcolor(showBgColor ? bgColor : na)
@@ -215,18 +211,14 @@ var int barsSinceTurnUp = na
 var int barsSinceTurnDown = na
 
 if vwapTurnUp
-barsSinceTurnUp := 0
-barsSinceTurnUp
+    barsSinceTurnUp := 0
 if vwapTurnDown
-barsSinceTurnDown := 0
-barsSinceTurnDown
+    barsSinceTurnDown := 0
 
 if not na(barsSinceTurnUp)
-barsSinceTurnUp := barsSinceTurnUp + 1
-barsSinceTurnUp
+    barsSinceTurnUp := barsSinceTurnUp + 1
 if not na(barsSinceTurnDown)
-barsSinceTurnDown := barsSinceTurnDown + 1
-barsSinceTurnDown
+    barsSinceTurnDown := barsSinceTurnDown + 1
 
 flashColorUp = barsSinceTurnUp < 5 and bar_index % 2 == 0 ? color.yellow : color.white
 flashColorDown = barsSinceTurnDown < 5 and bar_index % 2 == 0 ? color.yellow : color.white
@@ -301,54 +293,49 @@ var eclipseLabelIdx = 0
 var solsticeEquinoxLabelIdx = 0
 
 if showPurnimaAmavasya and amavasyaLabelIdx < array.size(amavasyaDates)
-while amavasyaLabelIdx < array.size(amavasyaDates) and array.get(amavasyaDates, amavasyaLabelIdx) <= time
-if time >= array.get(amavasyaDates, amavasyaLabelIdx) and time[1] < array.get(amavasyaDates, amavasyaLabelIdx)
-array.push(eventLabels, label.new(x = time, y = yPosAbove, text = '🌑', style = label.style_none, textcolor = #FFFFFF, size = size.huge, tooltip = 'Amavasya', xloc = xloc.bar_time))
-if showVerticalLines
-line newLine = line.new(bar_index, low, bar_index, high, color = amavasyaLineColor, width = lineWidth, extend = extend.both)
-array.push(eventLines, newLine)
-amavasyaLabelIdx := amavasyaLabelIdx + 1
-amavasyaLabelIdx
+    while amavasyaLabelIdx < array.size(amavasyaDates) and array.get(amavasyaDates, amavasyaLabelIdx) <= time
+        if time >= array.get(amavasyaDates, amavasyaLabelIdx) and time[1] < array.get(amavasyaDates, amavasyaLabelIdx)
+            array.push(eventLabels, label.new(x = time, y = yPosAbove, text = '🌑', style = label.style_none, textcolor = #FFFFFF, size = size.huge, tooltip = 'Amavasya', xloc = xloc.bar_time))
+            if showVerticalLines
+                line newLine = line.new(bar_index, low, bar_index, high, color = amavasyaLineColor, width = lineWidth, extend = extend.both)
+                array.push(eventLines, newLine)
+        amavasyaLabelIdx := amavasyaLabelIdx + 1
 
 if showPurnimaAmavasya and purnimaLabelIdx < array.size(purnimaDates)
-while purnimaLabelIdx < array.size(purnimaDates) and array.get(purnimaDates, purnimaLabelIdx) <= time
-if time >= array.get(purnimaDates, purnimaLabelIdx) and time[1] < array.get(purnimaDates, purnimaLabelIdx)
-array.push(eventLabels, label.new(x = time, y = yPosAbove, text = '🌕', style = label.style_none, textcolor = #FFFFFF, size = size.huge, tooltip = 'Purnima', xloc = xloc.bar_time))
-if showVerticalLines
-line newLine = line.new(bar_index, low, bar_index, high, color = purnimaLineColor, width = lineWidth, extend = extend.both)
-array.push(eventLines, newLine)
-purnimaLabelIdx := purnimaLabelIdx + 1
-purnimaLabelIdx
+    while purnimaLabelIdx < array.size(purnimaDates) and array.get(purnimaDates, purnimaLabelIdx) <= time
+        if time >= array.get(purnimaDates, purnimaLabelIdx) and time[1] < array.get(purnimaDates, purnimaLabelIdx)
+            array.push(eventLabels, label.new(x = time, y = yPosAbove, text = '🌕', style = label.style_none, textcolor = #FFFFFF, size = size.huge, tooltip = 'Purnima', xloc = xloc.bar_time))
+            if showVerticalLines
+                line newLine = line.new(bar_index, low, bar_index, high, color = purnimaLineColor, width = lineWidth, extend = extend.both)
+                array.push(eventLines, newLine)
+        purnimaLabelIdx := purnimaLabelIdx + 1
 
 if showPushyaNakshatra and pushyaLabelIdx < array.size(pushyaNakshatraDates)
-while pushyaLabelIdx < array.size(pushyaNakshatraDates) and array.get(pushyaNakshatraDates, pushyaLabelIdx) <= time
-if time >= array.get(pushyaNakshatraDates, pushyaLabelIdx) and time[1] < array.get(pushyaNakshatraDates, pushyaLabelIdx)
-array.push(eventLabels, label.new(x = time, y = yPosAbove, text = '✨', style = label.style_label_down, color = #800080, textcolor = #FFFFFF, size = size.huge, tooltip = 'Pushya Nakshatra', xloc = xloc.bar_time))
-if showVerticalLines
-line newLine = line.new(bar_index, low, bar_index, high, color = pushyaLineColor, width = lineWidth, extend = extend.both)
-array.push(eventLines, newLine)
-pushyaLabelIdx := pushyaLabelIdx + 1
-pushyaLabelIdx
+    while pushyaLabelIdx < array.size(pushyaNakshatraDates) and array.get(pushyaNakshatraDates, pushyaLabelIdx) <= time
+        if time >= array.get(pushyaNakshatraDates, pushyaLabelIdx) and time[1] < array.get(pushyaNakshatraDates, pushyaLabelIdx)
+            array.push(eventLabels, label.new(x = time, y = yPosAbove, text = '✨', style = label.style_label_down, color = #800080, textcolor = #FFFFFF, size = size.huge, tooltip = 'Pushya Nakshatra', xloc = xloc.bar_time))
+            if showVerticalLines
+                line newLine = line.new(bar_index, low, bar_index, high, color = pushyaLineColor, width = lineWidth, extend = extend.both)
+                array.push(eventLines, newLine)
+        pushyaLabelIdx := pushyaLabelIdx + 1
 
 if showEclipses and eclipseLabelIdx < array.size(eclipseDates)
-while eclipseLabelIdx < array.size(eclipseDates) and array.get(eclipseDates, eclipseLabelIdx) <= time
-if time >= array.get(eclipseDates, eclipseLabelIdx) and time[1] < array.get(eclipseDates, eclipseLabelIdx)
-array.push(eventLabels, label.new(x = time, y = yPosAbove, text = 'ECL', style = label.style_label_down, color = #FFA500, textcolor = #FFFFFF, size = size.huge, tooltip = 'Eclipse', xloc = xloc.bar_time))
-if showVerticalLines
-line newLine = line.new(bar_index, low, bar_index, high, color = eclipseLineColor, width = lineWidth, extend = extend.both)
-array.push(eventLines, newLine)
-eclipseLabelIdx := eclipseLabelIdx + 1
-eclipseLabelIdx
+    while eclipseLabelIdx < array.size(eclipseDates) and array.get(eclipseDates, eclipseLabelIdx) <= time
+        if time >= array.get(eclipseDates, eclipseLabelIdx) and time[1] < array.get(eclipseDates, eclipseLabelIdx)
+            array.push(eventLabels, label.new(x = time, y = yPosAbove, text = 'ECL', style = label.style_label_down, color = #FFA500, textcolor = #FFFFFF, size = size.huge, tooltip = 'Eclipse', xloc = xloc.bar_time))
+            if showVerticalLines
+                line newLine = line.new(bar_index, low, bar_index, high, color = eclipseLineColor, width = lineWidth, extend = extend.both)
+                array.push(eventLines, newLine)
+        eclipseLabelIdx := eclipseLabelIdx + 1
 
 if showSolsticesEquinoxes and solsticeEquinoxLabelIdx < array.size(solsticeEquinoxDates)
-while solsticeEquinoxLabelIdx < array.size(solsticeEquinoxDates) and array.get(solsticeEquinoxDates, solsticeEquinoxLabelIdx) <= time
-if time >= array.get(solsticeEquinoxDates, solsticeEquinoxLabelIdx) and time[1] < array.get(solsticeEquinoxDates, solsticeEquinoxLabelIdx)
-array.push(eventLabels, label.new(x = time, y = yPosAbove, text = 'S/E', style = label.style_label_down, color = #FFFF00, textcolor = #000000, size = size.huge, tooltip = 'Solstice/Equinox', xloc = xloc.bar_time))
-if showVerticalLines
-line newLine = line.new(bar_index, low, bar_index, high, color = eclipseLineColor, width = lineWidth, extend = extend.both)
-array.push(eventLines, newLine)
-solsticeEquinoxLabelIdx := solsticeEquinoxLabelIdx + 1
-solsticeEquinoxLabelIdx
+    while solsticeEquinoxLabelIdx < array.size(solsticeEquinoxDates) and array.get(solsticeEquinoxDates, solsticeEquinoxLabelIdx) <= time
+        if time >= array.get(solsticeEquinoxDates, solsticeEquinoxLabelIdx) and time[1] < array.get(solsticeEquinoxDates, solsticeEquinoxLabelIdx)
+            array.push(eventLabels, label.new(x = time, y = yPosAbove, text = 'S/E', style = label.style_label_down, color = #FFFF00, textcolor = #000000, size = size.huge, tooltip = 'Solstice/Equinox', xloc = xloc.bar_time))
+            if showVerticalLines
+                line newLine = line.new(bar_index, low, bar_index, high, color = eclipseLineColor, width = lineWidth, extend = extend.both)
+                array.push(eventLines, newLine)
+        solsticeEquinoxLabelIdx := solsticeEquinoxLabelIdx + 1
 
 if array.size(eventLabels) > max_drawings
 label.delete(array.shift(eventLabels))
@@ -365,27 +352,25 @@ isNewDay = ta.change(time('D')) != 0
 // --- Day Separator ---
 var line daySeparatorLine = na
 if isNewDay and showDaySeparator
-line.delete(daySeparatorLine)
-daySeparatorLine := line.new(bar_index, low, bar_index, high, extend = extend.both, color = separatorColor, style = separatorStyle, width = separatorWidth)
-daySeparatorLine
+    line.delete(daySeparatorLine)
+    daySeparatorLine := line.new(bar_index, low, bar_index, high, extend = extend.both, color = separatorColor, style = separatorStyle, width = separatorWidth)
 
 
 if isNewDay and showPDHL
-pdh = request.security(syminfo.tickerid, 'D', high[1])
-pdl = request.security(syminfo.tickerid, 'D', low[1])
+    pdh = request.security(syminfo.tickerid, 'D', high[1])
+    pdl = request.security(syminfo.tickerid, 'D', low[1])
 
-// Delete old lines and labels
-line.delete(pdhLine)
-line.delete(pdlLine)
-label.delete(pdhLabel)
-label.delete(pdlLabel)
+    // Delete old lines and labels
+    line.delete(pdhLine)
+    line.delete(pdlLine)
+    label.delete(pdhLabel)
+    label.delete(pdlLabel)
 
-// Create new lines and labels
-pdhLine := line.new(bar_index, pdh, bar_index + 1, pdh, extend = extend.right, color = pdhlColor, width = pdhlWidth, style = line.style_dashed)
-pdlLine := line.new(bar_index, pdl, bar_index + 1, pdl, extend = extend.right, color = pdhlColor, width = pdhlWidth, style = line.style_dashed)
-pdhLabel := label.new(time + 86400000, pdh, 'PDH: ' + str.tostring(pdh, format.mintick), style = label.style_none, textcolor = pdhlColor, xloc = xloc.bar_time)
-pdlLabel := label.new(time + 86400000, pdl, 'PDL: ' + str.tostring(pdl, format.mintick), style = label.style_none, textcolor = pdhlColor, xloc = xloc.bar_time)
-pdlLabel
+    // Create new lines and labels
+    pdhLine := line.new(bar_index, pdh, bar_index + 1, pdh, extend = extend.right, color = pdhlColor, width = pdhlWidth, style = line.style_dashed)
+    pdlLine := line.new(bar_index, pdl, bar_index + 1, pdl, extend = extend.right, color = pdhlColor, width = pdhlWidth, style = line.style_dashed)
+    pdhLabel := label.new(time + 86400000, pdh, 'PDH: ' + str.tostring(pdh, format.mintick), style = label.style_none, textcolor = pdhlColor, xloc = xloc.bar_time)
+    pdlLabel := label.new(time + 86400000, pdl, 'PDL: ' + str.tostring(pdl, format.mintick), style = label.style_none, textcolor = pdhlColor, xloc = xloc.bar_time)
 
 // --- Info Table ---
 var table infoTable = table.new(tablePosition, 2, 9, border_width = 2, border_color = tableBorderColor)
