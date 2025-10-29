@@ -274,19 +274,19 @@ var eventLabels = array.new_label()
 var signalLabels = array.new_label()
 
 if buySignal and showSignals
-    array.push(signalLabels, label.new(bar_index, low, '🚀', style = label.style_none, size = size.large, yloc = yloc.belowbar))
+    array.push(signalLabels, label.new(bar_index, low, '🚀 Buy', style = label.style_label_up, color = color.new(color.green, 20), textcolor = color.white, size = size.normal, yloc = yloc.belowbar))
 
 if sellSignal and showSignals
-    array.push(signalLabels, label.new(bar_index, high, '💥', style = label.style_none, size = size.large, yloc = yloc.abovebar))
+    array.push(signalLabels, label.new(bar_index, high, '💥 Sell', style = label.style_label_down, color = color.new(color.red, 20), textcolor = color.white, size = size.normal, yloc = yloc.abovebar))
 
 bullishReversalSignal = vwapTurnUp and isBullishPhase
 bearishReversalSignal = vwapTurnDown and isBearishPhase
 
 if bullishReversalSignal
-    array.push(signalLabels, label.new(bar_index, na, '🔥', yloc = yloc.belowbar, style = label.style_label_up, color = color.new(color.green, 100), textcolor = color.new(color.green, 0), size = size.small))
+    array.push(signalLabels, label.new(bar_index, na, '🔥 Reversal Point', yloc = yloc.belowbar, style = label.style_label_up, color = color.new(color.green, 100), textcolor = color.new(color.green, 0), size = size.small))
 
 if bearishReversalSignal
-    array.push(signalLabels, label.new(bar_index, na, '🔥', yloc = yloc.abovebar, style = label.style_label_down, color = color.new(color.red, 100), textcolor = color.new(color.red, 0), size = size.small))
+    array.push(signalLabels, label.new(bar_index, na, '🔥 Reversal Point', yloc = yloc.abovebar, style = label.style_label_down, color = color.new(color.red, 100), textcolor = color.new(color.red, 0), size = size.small))
 
 plotshape(bullishReversalSignal, style = shape.diamond, location = location.belowbar, color = color.new(color.green, 0), size = size.small)
 plotshape(bearishReversalSignal, style = shape.diamond, location = location.abovebar, color = color.new(color.red, 0), size = size.small)
