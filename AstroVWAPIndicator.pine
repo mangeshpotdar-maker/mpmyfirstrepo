@@ -31,7 +31,7 @@ bearishColor = input.color(DEF_BEARISH_COLOR, title = 'Bearish Color', group = '
 showPDHL = input.bool(true, title = 'Show Previous Day High/Low', group = 'Display Settings')
 pdhlColor = input.color(DEF_PDHL_COLOR, title = 'PDHL Color', group = 'Display Settings')
 pdhlWidth = input.int(2, title = 'PDHL Width', group = 'Display Settings')
-showProximityTable = input.bool(true, title = 'Show VWAP Proximity Table', group = 'Display Settings')
+showInfoTables = input.bool(true, title = 'Show Info Tables', group = 'Display Settings')
 colorHighVolume = input.bool(true, title = 'Color High Volume Candles', group = 'Display Settings')
 vwapUpColor = input.color(DEF_VWAP_UP_COLOR, title = 'VWAP Up Color', group = 'VWAP Settings')
 vwapDownColor = input.color(DEF_VWAP_DOWN_COLOR, title = 'VWAP Down Color', group = 'VWAP Settings')
@@ -51,12 +51,10 @@ separatorStyle = input.string(line.style_solid, 'Separator Style', options = [li
 separatorWidth = input.int(2, title = 'Separator Width', group = 'Display Settings')
 
 // --- Table Settings ---
-tablePosition = input.string(position.bottom_right, 'Table Position', options = [position.top_right, position.bottom_right, position.top_left, position.bottom_left], group = 'Table Settings')
+trendTablePosition = input.position(position.bottom_right, 'Trend Table Position', group = 'Table Settings')
+priceTablePosition = input.position(position.bottom_left, 'Price Table Position', group = 'Table Settings')
 tableBgColor = input.color(color.new(color.gray, 80), 'Table BG Color', group = 'Table Settings')
 tableBorderColor = input.color(color.black, 'Table Border Color', group = 'Table Settings')
-flashProximity = input.bool(true, title = 'Flash Proximity Alert', group = 'Table Settings')
-proximityThreshold = input.int(10, title = 'Proximity Threshold', group = 'Table Settings')
-flashColor = input.color(color.new(color.yellow, 50), 'Flash Color', group = 'Table Settings')
 
 // --- Amavasya Dates ---
 var amavasyaDates = array.from(timestamp('Asia/Kolkata', 2024, 1, 11, 5, 57), timestamp('Asia/Kolkata', 2024, 2, 9, 16, 0), timestamp('Asia/Kolkata', 2024, 3, 10, 14, 1), timestamp('Asia/Kolkata', 2024, 4, 8, 23, 19), timestamp('Asia/Kolkata', 2024, 5, 8, 8, 57), timestamp('Asia/Kolkata', 2024, 6, 6, 17, 38), timestamp('Asia/Kolkata', 2024, 7, 6, 6, 0), timestamp('Asia/Kolkata', 2024, 8, 4, 19, 14), timestamp('Asia/Kolkata', 2024, 9, 3, 9, 26), timestamp('Asia/Kolkata', 2024, 10, 2, 23, 25), timestamp('Asia/Kolkata', 2024, 11, 1, 12, 3), timestamp('Asia/Kolkata', 2024, 12, 1, 0, 32), timestamp('Asia/Kolkata', 2025, 1, 29, 9, 54), timestamp('Asia/Kolkata', 2025, 2, 28, 15, 5), timestamp('Asia/Kolkata', 2025, 3, 29, 18, 43), timestamp('Asia/Kolkata', 2025, 4, 28, 22, 20), timestamp('Asia/Kolkata', 2025, 5, 28, 2, 37), timestamp('Asia/Kolkata', 2025, 6, 26, 8, 1), timestamp('Asia/Kolkata', 2025, 7, 25, 15, 12), timestamp('Asia/Kolkata', 2025, 8, 24, 1, 51), timestamp('Asia/Kolkata', 2025, 9, 22, 16, 1), timestamp('Asia/Kolkata', 2025, 10, 22, 8, 25), timestamp('Asia/Kolkata', 2025, 11, 21, 3, 30), timestamp('Asia/Kolkata', 2025, 12, 20, 22, 20), timestamp('Asia/Kolkata', 2026, 1, 19, 15, 8), timestamp('Asia/Kolkata', 2026, 2, 18, 4, 39), timestamp('Asia/Kolkata', 2026, 3, 19, 14, 57), timestamp('Asia/Kolkata', 2026, 4, 17, 23, 13), timestamp('Asia/Kolkata', 2026, 5, 17, 6, 3), timestamp('Asia/Kolkata', 2026, 6, 15, 13, 28), timestamp('Asia/Kolkata', 2026, 7, 14, 22, 21), timestamp('Asia/Kolkata', 2026, 8, 13, 9, 13), timestamp('Asia/Kolkata', 2026, 9, 11, 22, 9), timestamp('Asia/Kolkata', 2026, 10, 11, 13, 1), timestamp('Asia/Kolkata', 2026, 11, 10, 8, 0), timestamp('Asia/Kolkata', 2026, 12, 10, 4, 28))
@@ -373,11 +371,19 @@ if isNewDay and showPDHL
     pdlLabel := label.new(time + 86400000, pdl, 'PDL: ' + str.tostring(pdl, format.mintick), style = label.style_none, textcolor = pdhlColor, xloc = xloc.bar_time)
 
 // --- Info Table ---
-var table infoTable = table.new(tablePosition, 2, 9, border_width = 2, border_color = tableBorderColor)
-if showProximityTable
-    table.clear(infoTable, 0, 0, 1, 8) // Clear table on each bar to apply new styles
-    table.set_bgcolor(infoTable, tableBgColor)
-    table.set_border_width(infoTable, 2)
+var table trendTable = table.new(trendTablePosition, 2, 4, border_width = 2, border_color = tableBorderColor)
+var table priceTable = table.new(priceTablePosition, 2, 4, border_width = 2, border_color = tableBorderColor)
+
+if showInfoTables
+    // Clear and set up Trend Table
+    table.clear(trendTable, 0, 0, 1, 3)
+    table.set_bgcolor(trendTable, tableBgColor)
+    table.set_border_width(trendTable, 2)
+
+    // Clear and set up Price Table
+    table.clear(priceTable, 0, 0, 1, 3)
+    table.set_bgcolor(priceTable, tableBgColor)
+    table.set_border_width(priceTable, 2)
 
     // Find next event
     nextAmavasya = array.get(amavasyaDates, amavasyaIdx)
@@ -396,26 +402,37 @@ if showProximityTable
     bullishBearishEmoji = isBullishPhase ? '🟢' : '🔴'
     dayName = str.tostring(dayofweek)
 
-    // table.cell(infoTable, 0, 0, 'Symbol', text_halign = 'left', text_size = size.small, text_color = #000000)
-    // table.cell(infoTable, 1, 0, syminfo.ticker, text_halign = 'center')
     nextEventColor = nextEventName == 'Purnima' ? color.green : color.red
-    table.cell(infoTable, 0, 1, 'Next Event', text_halign = 'left', text_size = size.small, text_color = #000000)
-    table.cell(infoTable, 1, 1, nextEventName, text_halign = 'center', text_color = nextEventColor)
-    table.cell(infoTable, 0, 2, 'Days to Event', text_halign = 'left', text_size = size.small, text_color = #000000)
-    table.cell(infoTable, 1, 2, str.tostring(int(daysToNextEvent)), text_halign = 'center')
-    table.cell(infoTable, 0, 3, 'Current Period', text_halign = 'left', text_size = size.small, text_color = #000000)
-    table.cell(infoTable, 1, 3, bullishBearishEmoji, text_halign = 'center', text_size = size.small)
-    table.cell(infoTable, 0, 4, 'Close', text_halign = 'left', text_size = size.small, text_color = #000000)
-    table.cell(infoTable, 1, 4, str.tostring(int(close)), text_halign = 'center')
-    table.cell(infoTable, 0, 5, 'VWAP', text_halign = 'left', text_size = size.small, text_color = #000000)
-    table.cell(infoTable, 1, 5, str.tostring(int(vwapValue)), text_halign = 'center')
-    proximityValue = close - vwapValue
-    proximityAbs = math.abs(proximityValue)
-    flashCondition = flashProximity and proximityAbs <= proximityThreshold and bar_index % 2 == 0
-    proximityBgColor = flashCondition ? flashColor : tableBgColor
+    table.cell(trendTable, 0, 0, 'Current Trend', text_halign = 'left', text_size = size.small, text_color = #000000)
+    table.cell(trendTable, 1, 0, bullishBearishEmoji, text_halign = 'center', text_size = size.small)
+    table.cell(trendTable, 0, 1, 'Next Event', text_halign = 'left', text_size = size.small, text_color = #000000)
+    table.cell(trendTable, 1, 1, nextEventName, text_halign = 'center', text_color = nextEventColor)
+    table.cell(trendTable, 0, 2, 'Days to Event', text_halign = 'left', text_size = size.small, text_color = #000000)
+    table.cell(trendTable, 1, 2, str.tostring(int(daysToNextEvent)), text_halign = 'center')
 
-    table.cell(infoTable, 0, 6, 'Proximity', text_halign = 'left', text_size = size.small, text_color = #000000, bgcolor = proximityBgColor)
-    table.cell(infoTable, 1, 6, str.tostring(int(proximityValue)), text_halign = 'center', bgcolor = proximityBgColor)
+    // Populate Price Table
+    table.cell(priceTable, 0, 0, 'Close', text_halign = 'left', text_size = size.small, text_color = #000000)
+    table.cell(priceTable, 1, 0, str.tostring(int(close)), text_halign = 'center')
+    table.cell(priceTable, 0, 1, 'VWAP', text_halign = 'left', text_size = size.small, text_color = #000000)
+    table.cell(priceTable, 1, 1, str.tostring(int(vwapValue)), text_halign = 'center')
+
+    proximityValue = close - vwapValue
+
+    // Proximity flashing logic
+    proximityBgColor = if bar_index % 2 == 0
+        if proximityValue >= 1 and proximityValue <= 25
+            color.red
+        else if proximityValue <= -1 and proximityValue >= -25
+            color.green
+        else if proximityValue == 0
+            color.orange
+        else
+            tableBgColor
+    else
+        tableBgColor
+
+    table.cell(priceTable, 0, 2, 'Proximity', text_halign = 'left', text_size = size.small, text_color = #000000, bgcolor = proximityBgColor)
+    table.cell(priceTable, 1, 2, str.tostring(int(proximityValue)), text_halign = 'center', bgcolor = proximityBgColor)
 
 // --- High Volume Candle Coloring ---
 volumeSma = ta.sma(volume, 10)
