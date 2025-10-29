@@ -5,6 +5,7 @@ indicator('VWAP Proximity Oscillator', 'VWAP Proximity', overlay = false)
 // @description Calculates the VWAP and smoothed VWAP.
 
 // --- Inputs ---
+showSignals = input.bool(true, title = 'Show Crossover Signals', group = 'Display Settings')
 vwapPeriod = input.int(5, title = 'VWAP Period', group = 'VWAP Settings')
 smoothingType = input.string('EMA', title = 'Smoothing Type', options = ['EMA', 'WMA', 'SMA', 'HMA'], group = 'VWAP Settings')
 smoothingLength = input.int(5, title = 'Smoothing Length', group = 'VWAP Settings')
@@ -30,7 +31,18 @@ smoothedVwapValue = switch smoothingType
 // --- Proximity Calculation ---
 proximityValue = close - smoothedVwapValue
 
+// --- Signal Logic ---
+buySignal = ta.crossover(proximityValue, 0)
+sellSignal = ta.crossunder(proximityValue, 0)
+
 // --- Plotting ---
 proximityColor = proximityValue >= 0 ? color.new(color.green, 20) : color.new(color.red, 20)
 plot(proximityValue, title = 'Proximity', style = plot.style_columns, color = proximityColor)
 hline(0, 'Zero Line', color = color.gray, linestyle = hline.style_dashed)
+
+plotshape(showSignals and buySignal, style = shape.arrowup, location = location.belowbar, color = color.green, size = size.small, title = 'Buy Signal')
+plotshape(showSignals and sellSignal, style = shape.arrowdown, location = location.abovebar, color = color.red, size = size.small, title = 'Sell Signal')
+
+// --- Alert Conditions ---
+alertcondition(buySignal, title = 'VWAP Proximity Buy Signal', message = 'VWAP Proximity has crossed above zero.')
+alertcondition(sellSignal, title = 'VWAP Proximity Sell Signal', message = 'VWAP Proximity has crossed below zero.')
