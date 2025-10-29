@@ -51,8 +51,8 @@ separatorStyle = input.string(line.style_solid, 'Separator Style', options = [li
 separatorWidth = input.int(2, title = 'Separator Width', group = 'Display Settings')
 
 // --- Table Settings ---
-trendTablePosition = input.position(position.bottom_right, 'Trend Table Position', group = 'Table Settings')
-priceTablePosition = input.position(position.bottom_left, 'Price Table Position', group = 'Table Settings')
+trendTablePosition = input.string(position.bottom_right, 'Trend Table Position', options = [position.top_right, position.bottom_right, position.top_left, position.bottom_left], group = 'Table Settings')
+priceTablePosition = input.string(position.bottom_left, 'Price Table Position', options = [position.top_right, position.bottom_right, position.top_left, position.bottom_left], group = 'Table Settings')
 tableBgColor = input.color(color.new(color.gray, 80), 'Table BG Color', group = 'Table Settings')
 tableBorderColor = input.color(color.black, 'Table Border Color', group = 'Table Settings')
 
@@ -249,8 +249,10 @@ prevWeekHigh = request.security(syminfo.tickerid, 'W', high[1], lookahead = barm
 prevWeekLow = request.security(syminfo.tickerid, 'W', low[1], lookahead = barmerge.lookahead_on)
 
 // Fallback for positioning if weekly data is not available
-stableHigh = na(prevWeekHigh) ? ta.highest(high, 200) : prevWeekHigh
-stableLow = na(prevWeekLow) ? ta.lowest(low, 200) : prevWeekLow
+highestFallback = ta.highest(high, 200)
+lowestFallback = ta.lowest(low, 200)
+stableHigh = na(prevWeekHigh) ? highestFallback : prevWeekHigh
+stableLow = na(prevWeekLow) ? lowestFallback : prevWeekLow
 
 // Define y-coordinates for labels
 yPosAbove = stableHigh + 200 * syminfo.mintick
