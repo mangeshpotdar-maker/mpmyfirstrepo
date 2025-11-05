@@ -46,6 +46,7 @@ rsiLength = input.int(14, title = 'RSI Length', group = 'RSI Settings')
 rsiCrossoverThreshold = input.int(60, title = 'RSI Crossover Threshold', group = 'RSI Settings')
 rsiSmoothingType = input.string('SMA', title = 'RSI Smoothing Type', options = ['SMA', 'EMA', 'TMA', 'HMA'], group = 'RSI Settings')
 rsiSmoothingLength = input.int(14, title = 'RSI Smoothing Length', group = 'RSI Settings')
+showRsiCrossoverLines = input.bool(true, title = 'Show RSI Crossover Lines & Labels', group = 'RSI Settings')
 
 
 // --- Vertical Line Settings ---
@@ -425,6 +426,33 @@ if array.size(eventLabels) > max_drawings
     label.delete(array.shift(eventLabels))
 if array.size(eventLines) > max_drawings
     line.delete(array.shift(eventLines))
+
+// --- RSI Crossover Lines and Labels ---
+var line rsiHighLine = na
+var line rsiLowLine = na
+var label rsiHighLabel = na
+var label rsiLowLabel = na
+
+if rsiCrossover
+    // Delete old lines and labels
+    line.delete(rsiHighLine)
+    line.delete(rsiLowLine)
+    label.delete(rsiHighLabel)
+    label.delete(rsiLowLabel)
+
+    // Create new lines and labels if the feature is enabled
+    if showRsiCrossoverLines
+        rsiHighLine := line.new(bar_index, high, bar_index + 1, high, extend = extend.right, color = pdhlColor, width = 1, style = line.style_dotted)
+        rsiLowLine := line.new(bar_index, low, bar_index + 1, low, extend = extend.right, color = pdhlColor, width = 1, style = line.style_dotted)
+        rsiHighLabel := label.new(time + 86400000, high, 'RSI H: ' + str.tostring(high, format.mintick), style = label.style_none, textcolor = pdhlColor, xloc = xloc.bar_time)
+        rsiLowLabel := label.new(time + 86400000, low, 'RSI L: ' + str.tostring(low, format.mintick), style = label.style_none, textcolor = pdhlColor, xloc = xloc.bar_time)
+
+// Also delete if the user turns off the feature
+if not showRsiCrossoverLines
+    line.delete(rsiHighLine)
+    line.delete(rsiLowLine)
+    label.delete(rsiHighLabel)
+    label.delete(rsiLowLabel)
 
 // --- Previous Day High/Low ---
 var line pdhLine = na
