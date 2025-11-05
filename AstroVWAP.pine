@@ -1,0 +1,567 @@
+//@version=6
+indicator('Astro VWAP Indicator', 'Astro VWAP', overlay = true)
+
+// --- START --- Astro Block
+// @description Holds all astrological data and settings.
+
+// --- Default Color Constants ---
+const color DEF_BULLISH_COLOR = color.new(#c8e6c9, 87)
+const color DEF_BEARISH_COLOR = color.new(#fccbcd, 92)
+const color DEF_PDHL_COLOR = #0000FF
+const color DEF_VWAP_UP_COLOR = #a5f411
+const color DEF_VWAP_DOWN_COLOR = #f20f22
+const color DEF_AMAVASYA_LINE_COLOR = #FF000080
+const color DEF_PURNIMA_LINE_COLOR = #00800080
+const color DEF_PUSHYA_LINE_COLOR = #FFFF0080
+const color DEF_ECLIPSE_LINE_COLOR = #80808080
+
+// --- Main Settings ---
+showPurnimaAmavasya = input.bool(true, title = 'Show Purnima/Amavasya Events', group = 'Display Settings')
+showPushyaNakshatra = input.bool(true, title = 'Show Pushya Nakshatra Events', group = 'Display Settings')
+showEclipses = input.bool(true, title = 'Show Eclipse Events', group = 'Display Settings')
+showSolsticesEquinoxes = input.bool(true, title = 'Show Solstice/Equinox Events', group = 'Display Settings')
+showVWAP = input.bool(false, title = 'Show VWAP', group = 'Display Settings')
+showSmoothedVWAP = input.bool(true, title = 'Show Smoothed VWAP', group = 'Display Settings')
+showSignals = input.bool(true, title = 'Show Buy/Sell Signals', group = 'Display Settings')
+showBuySellAlerts = input.bool(false, title = 'Show Alerts based on Crossover', group = 'Display Settings')
+showReversalAlerts = input.bool(true, title = 'Show Alerts based VWAP Reversal', group = 'Display Settings')
+showRsiCrossoverAlerts = input.bool(true, title = 'Show RSI Crossover Alerts', group = 'Display Settings')
+showBgColor = input.bool(false, title = 'Show Background Coloring', group = 'Display Settings')
+bullishColor = input.color(DEF_BULLISH_COLOR, title = 'Bullish Color', group = 'Display Settings')
+bearishColor = input.color(DEF_BEARISH_COLOR, title = 'Bearish Color', group = 'Display Settings')
+showPDHL = input.bool(true, title = 'Show Previous Day High/Low', group = 'Display Settings')
+pdhlColor = input.color(DEF_PDHL_COLOR, title = 'PDHL Color', group = 'Display Settings')
+pdhlWidth = input.int(2, title = 'PDHL Width', group = 'Display Settings')
+showInfoTables = input.bool(true, title = 'Show Info Tables', group = 'Display Settings')
+colorHighVolume = input.bool(true, title = 'Color High Volume Candles', group = 'Display Settings')
+showRSICrossover = input.bool(true, title = 'Show RSI Crossover Candles', group = 'Display Settings')
+showMPGannPivot = input.bool(true, title = 'Show MP Gann Pivot', group = 'Display Settings')
+
+
+vwapUpColor = input.color(DEF_VWAP_UP_COLOR, title = 'VWAP Up Color', group = 'VWAP Settings')
+vwapDownColor = input.color(DEF_VWAP_DOWN_COLOR, title = 'VWAP Down Color', group = 'VWAP Settings')
+
+// --- RSI Settings ---
+rsiLength = input.int(14, title = 'RSI Length', group = 'RSI Settings')
+rsiCrossoverThreshold = input.int(60, title = 'RSI Crossover Threshold', group = 'RSI Settings')
+rsiSmoothingType = input.string('SMA', title = 'RSI Smoothing Type', options = ['SMA', 'EMA', 'TMA', 'HMA'], group = 'RSI Settings')
+rsiSmoothingLength = input.int(14, title = 'RSI Smoothing Length', group = 'RSI Settings')
+
+
+// --- Vertical Line Settings ---
+showVerticalLines = input.bool(true, title = 'Show Vertical Event Lines', group = 'Display Settings')
+amavasyaLineColor = input.color(DEF_AMAVASYA_LINE_COLOR, title = 'Amavasya Line Color', group = 'Display Settings')
+purnimaLineColor = input.color(DEF_PURNIMA_LINE_COLOR, title = 'Purnima Line Color', group = 'Display Settings')
+pushyaLineColor = input.color(DEF_PUSHYA_LINE_COLOR, title = 'Pushya Nakshatra Line Color', group = 'Display Settings')
+eclipseLineColor = input.color(DEF_ECLIPSE_LINE_COLOR, title = 'Eclipse/Solstice Line Color', group = 'Display Settings')
+lineWidth = input.int(2, title = 'Line Width', group = 'Display Settings')
+
+// --- Day Separator Settings ---
+showDaySeparator = input.bool(true, title = 'Show Day Separator', group = 'Display Settings')
+separatorColor = input.color(color.new(#787b86, 0), title = 'Separator Color', group = 'Display Settings')
+separatorStyle = input.string(line.style_solid, 'Separator Style', options = [line.style_solid, line.style_dotted, line.style_dashed], group = 'Display Settings')
+separatorWidth = input.int(2, title = 'Separator Width', group = 'Display Settings')
+
+// --- Table Settings ---
+trendTablePosition = input.string(position.bottom_right, 'Trend Table Position', options = [position.top_right, position.bottom_right, position.top_left, position.bottom_left], group = 'Table Settings')
+priceTablePosition = input.string(position.bottom_left, 'Price Table Position', options = [position.top_right, position.bottom_right, position.top_left, position.bottom_left], group = 'Table Settings')
+tableBgColor = input.color(color.new(color.gray, 80), 'Table BG Color', group = 'Table Settings')
+tableBorderColor = input.color(color.black, 'Table Border Color', group = 'Table Settings')
+
+// --- Amavasya Dates ---
+var amavasyaDates = array.from(timestamp('Asia/Kolkata', 2024, 1, 11, 5, 57), timestamp('Asia/Kolkata', 2024, 2, 9, 16, 0), timestamp('Asia/Kolkata', 2024, 3, 10, 14, 1), timestamp('Asia/Kolkata', 2024, 4, 8, 23, 19), timestamp('Asia/Kolkata', 2024, 5, 8, 8, 57), timestamp('Asia/Kolkata', 2024, 6, 6, 17, 38), timestamp('Asia/Kolkata', 2024, 7, 6, 6, 0), timestamp('Asia/Kolkata', 2024, 8, 4, 19, 14), timestamp('Asia/Kolkata', 2024, 9, 3, 9, 26), timestamp('Asia/Kolkata', 2024, 10, 2, 23, 25), timestamp('Asia/Kolkata', 2024, 11, 1, 12, 3), timestamp('Asia/Kolkata', 2024, 12, 1, 0, 32), timestamp('Asia/Kolkata', 2025, 1, 29, 9, 54), timestamp('Asia/Kolkata', 2025, 2, 28, 15, 5), timestamp('Asia/Kolkata', 2025, 3, 29, 18, 43), timestamp('Asia/Kolkata', 2025, 4, 28, 22, 20), timestamp('Asia/Kolkata', 2025, 5, 28, 2, 37), timestamp('Asia/Kolkata', 2025, 6, 26, 8, 1), timestamp('Asia/Kolkata', 2025, 7, 25, 15, 12), timestamp('Asia/Kolkata', 2025, 8, 24, 1, 51), timestamp('Asia/Kolkata', 2025, 9, 22, 16, 1), timestamp('Asia/Kolkata', 2025, 10, 22, 8, 25), timestamp('Asia/Kolkata', 2025, 11, 21, 3, 30), timestamp('Asia/Kolkata', 2025, 12, 20, 22, 20), timestamp('Asia/Kolkata', 2026, 1, 19, 15, 8), timestamp('Asia/Kolkata', 2026, 2, 18, 4, 39), timestamp('Asia/Kolkata', 2026, 3, 19, 14, 57), timestamp('Asia/Kolkata', 2026, 4, 17, 23, 13), timestamp('Asia/Kolkata', 2026, 5, 17, 6, 3), timestamp('Asia/Kolkata', 2026, 6, 15, 13, 28), timestamp('Asia/Kolkata', 2026, 7, 14, 22, 21), timestamp('Asia/Kolkata', 2026, 8, 13, 9, 13), timestamp('Asia/Kolkata', 2026, 9, 11, 22, 9), timestamp('Asia/Kolkata', 2026, 10, 11, 13, 1), timestamp('Asia/Kolkata', 2026, 11, 10, 8, 0), timestamp('Asia/Kolkata', 2026, 12, 10, 4, 28))
+
+// --- Purnima Dates ---
+var purnimaDates = array.from(timestamp('Asia/Kolkata', 2024, 1, 25, 5, 54), timestamp('Asia/Kolkata', 2024, 2, 24, 18, 39), timestamp('Asia/Kolkata', 2024, 3, 25, 12, 3), timestamp('Asia/Kolkata', 2024, 4, 24, 8, 17), timestamp('Asia/Kolkata', 2024, 5, 23, 6, 47), timestamp('Asia/Kolkata', 2024, 6, 22, 7, 8), timestamp('Asia/Kolkata', 2024, 7, 21, 9, 38), timestamp('Asia/Kolkata', 2024, 8, 19, 14, 0), timestamp('Asia/Kolkata', 2024, 9, 18, 20, 34), timestamp('Asia/Kolkata', 2024, 10, 17, 5, 19), timestamp('Asia/Kolkata', 2024, 11, 15, 16, 17), timestamp('Asia/Kolkata', 2024, 12, 15, 5, 15), timestamp('Asia/Kolkata', 2025, 1, 13, 19, 24), timestamp('Asia/Kolkata', 2025, 2, 12, 9, 49), timestamp('Asia/Kolkata', 2025, 3, 13, 23, 39), timestamp('Asia/Kolkata', 2025, 4, 12, 11, 33), timestamp('Asia/Kolkata', 2025, 5, 12, 21, 14), timestamp('Asia/Kolkata', 2025, 6, 11, 5, 13), timestamp('Asia/Kolkata', 2025, 7, 10, 12, 23), timestamp('Asia/Kolkata', 2025, 8, 8, 19, 19), timestamp('Asia/Kolkata', 2025, 9, 7, 3, 5), timestamp('Asia/Kolkata', 2025, 10, 6, 12, 4), timestamp('Asia/Kolkata', 2025, 11, 4, 23, 21), timestamp('Asia/Kolkata', 2025, 12, 4, 13, 0), timestamp('Asia/Kolkata', 2026, 1, 3, 4, 14), timestamp('Asia/Kolkata', 2026, 2, 1, 20, 3), timestamp('Asia/Kolkata', 2026, 3, 3, 10, 34), timestamp('Asia/Kolkata', 2026, 4, 2, 0, 15), timestamp('Asia/Kolkata', 2026, 5, 1, 11, 22), timestamp('Asia/Kolkata', 2026, 5, 30, 20, 55), timestamp('Asia/Kolkata', 2026, 6, 29, 5, 6), timestamp('Asia/Kolkata', 2026, 7, 28, 12, 32), timestamp('Asia/Kolkata', 2026, 8, 26, 20, 9), timestamp('Asia/Kolkata', 2026, 9, 25, 4, 49), timestamp('Asia/Kolkata', 2026, 10, 24, 15, 7), timestamp('Asia/Kolkata', 2026, 11, 23, 3, 27), timestamp('Asia/Kolkata', 2026, 12, 22, 17, 7))
+
+// --- Pushya Nakshatra Dates ---
+var pushyaNakshatraDates = array.from(timestamp('Asia/Kolkata', 2024, 1, 26, 10, 28), timestamp('Asia/Kolkata', 2024, 5, 14, 13, 5), timestamp('Asia/Kolkata', 2024, 8, 4, 13, 26), timestamp('Asia/Kolkata', 2024, 9, 28, 13, 20), timestamp('Asia/Kolkata', 2025, 1, 15, 10, 28), timestamp('Asia/Kolkata', 2025, 10, 15, 12, 0), timestamp('Asia/Kolkata', 2026, 1, 5, 13, 25), timestamp('Asia/Kolkata', 2026, 3, 28, 14, 50), timestamp('Asia/Kolkata', 2026, 6, 18, 11, 33), timestamp('Asia/Kolkata', 2026, 8, 12, 10, 9))
+
+// --- Eclipse Dates ---
+var eclipseDates = array.from(timestamp('Asia/Kolkata', 2024, 3, 25, 12, 30), timestamp('Asia/Kolkata', 2024, 9, 18, 8, 11), timestamp('Asia/Kolkata', 2025, 3, 14, 12, 25), timestamp('Asia/Kolkata', 2025, 9, 7, 23, 42), timestamp('Asia/Kolkata', 2026, 3, 3, 16, 54), timestamp('Asia/Kolkata', 2026, 8, 28, 9, 47))
+
+// --- Solstice and Equinox Dates ---
+var solsticeEquinoxDates = array.from(timestamp('Asia/Kolkata', 2024, 3, 20, 8, 36), timestamp('Asia/Kolkata', 2024, 6, 21, 2, 20), timestamp('Asia/Kolkata', 2024, 9, 22, 18, 13), timestamp('Asia/Kolkata', 2024, 12, 21, 14, 50), timestamp('Asia/Kolkata', 2025, 3, 20, 14, 31), timestamp('Asia/Kolkata', 2025, 6, 21, 8, 12), timestamp('Asia/Kolkata', 2025, 9, 22, 23, 49), timestamp('Asia/Kolkata', 2025, 12, 21, 20, 33), timestamp('Asia/Kolkata', 2026, 3, 20, 20, 16), timestamp('Asia/Kolkata', 2026, 6, 21, 13, 54), timestamp('Asia/Kolkata', 2026, 9, 23, 5, 35), timestamp('Asia/Kolkata', 2026, 12, 22, 2, 20))
+
+// --- END --- Astro Block
+
+// --- START --- Moon Phase Logic
+// @description Determines the lunar cycle and applies background coloring.
+
+// Find the current lunar cycle
+var purnimaIdx = 0
+var amavasyaIdx = 0
+
+if array.size(purnimaDates) > 0
+    while purnimaIdx < array.size(purnimaDates) and array.get(purnimaDates, purnimaIdx) < time
+        purnimaIdx := purnimaIdx + 1
+
+if array.size(amavasyaDates) > 0
+    while amavasyaIdx < array.size(amavasyaDates) and array.get(amavasyaDates, amavasyaIdx) < time
+        amavasyaIdx := amavasyaIdx + 1
+
+lastPurnima = purnimaIdx > 0 ? array.get(purnimaDates, purnimaIdx - 1) : na
+lastAmavasya = amavasyaIdx > 0 ? array.get(amavasyaDates, amavasyaIdx - 1) : na
+
+// Determine background color based on the lunar cycle
+// Bullish phase: Purnima to Amavasya (Green)
+// Bearish phase: Amavasya to Purnima (Red)
+var color bgColor = na
+if not na(lastPurnima) and not na(lastAmavasya)
+    if lastPurnima > lastAmavasya
+        bgColor := bullishColor
+    else
+        bgColor := bearishColor
+else if na(lastPurnima) and not na(lastAmavasya)
+    bgColor := bearishColor
+else if not na(lastPurnima) and na(lastAmavasya)
+    bgColor := bullishColor
+
+
+bgcolor(showBgColor ? bgColor : na)
+
+// --- END --- Moon Phase Logic
+
+// --- START --- VWAP Block
+// @description Calculates and plots the VWAP and smoothed VWAP.
+
+// --- Inputs ---
+vwapPeriod = input.int(5, title = 'VWAP Period', group = 'VWAP Settings')
+smoothingType = input.string('EMA', title = 'Smoothing Type', options = ['EMA', 'WMA', 'SMA', 'HMA'], group = 'VWAP Settings')
+smoothingLength = input.int(5, title = 'Smoothing Length', group = 'VWAP Settings')
+
+// Anchored VWAP Inputs
+showWeeklyAVWAP = input.bool(false, title = 'Show Weekly AVWAP', group = 'Anchored VWAP Settings')
+weeklyAVWAPColor = input.color(#2962FF, title = 'Weekly AVWAP Color', group = 'Anchored VWAP Settings')
+weeklySmoothingType = input.string('EMA', title = 'Weekly Smoothing Type', options = ['EMA', 'WMA', 'SMA', 'HMA'], group = 'Anchored VWAP Settings')
+weeklySmoothingLength = input.int(5, title = 'Weekly Smoothing Length', group = 'Anchored VWAP Settings')
+
+showMonthlyAVWAP = input.bool(false, title = 'Show Monthly AVWAP', group = 'Anchored VWAP Settings')
+monthlyAVWAPColor = input.color(#FF6D00, title = 'Monthly AVWAP Color', group = 'Anchored VWAP Settings')
+monthlySmoothingType = input.string('EMA', title = 'Monthly Smoothing Type', options = ['EMA', 'WMA', 'SMA', 'HMA'], group = 'Anchored VWAP Settings')
+monthlySmoothingLength = input.int(5, title = 'Monthly Smoothing Length', group = 'Anchored VWAP Settings')
+
+
+// --- Calculations ---
+// MVWAP calculation with EMA fallback
+vwap_calculation = ta.sma(hlc3 * volume, vwapPeriod) / ta.sma(volume, vwapPeriod)
+ema_fallback = ta.ema(hlc3, vwapPeriod)
+vwapValue = not na(volume) ? vwap_calculation : ema_fallback
+
+// Anchored VWAP Calculations
+isNewWeek = ta.change(time('W')) != 0
+isNewMonth = ta.change(time('M')) != 0
+
+// Weekly AVWAP
+var float weeklySumSrcVol = 0.0
+var float weeklySumVol = 0.0
+weeklySumSrcVol := isNewWeek ? hlc3 * volume : weeklySumSrcVol + hlc3 * volume
+weeklySumVol := isNewWeek ? volume : weeklySumVol + volume
+weeklyAVWAP = weeklySumSrcVol / weeklySumVol
+
+// Monthly AVWAP
+var float monthlySumSrcVol = 0.0
+var float monthlySumVol = 0.0
+monthlySumSrcVol := isNewMonth ? hlc3 * volume : monthlySumSrcVol + hlc3 * volume
+monthlySumVol := isNewMonth ? volume : monthlySumVol + volume
+monthlyAVWAP = monthlySumSrcVol / monthlySumVol
+
+
+// Smoothed VWAP calculation
+emaSmoothed = ta.ema(vwapValue, smoothingLength)
+wmaSmoothed = ta.wma(vwapValue, smoothingLength)
+smaSmoothed = ta.sma(vwapValue, smoothingLength)
+hmaSmoothed = ta.hma(vwapValue, smoothingLength)
+
+smoothedVwapValue = switch smoothingType
+    'EMA' => emaSmoothed
+    'WMA' => wmaSmoothed
+    'SMA' => smaSmoothed
+    'HMA' => hmaSmoothed
+
+// Smoothed Weekly AVWAP
+weeklyEmaSmoothed = ta.ema(weeklyAVWAP, weeklySmoothingLength)
+weeklyWmaSmoothed = ta.wma(weeklyAVWAP, weeklySmoothingLength)
+weeklySmaSmoothed = ta.sma(weeklyAVWAP, weeklySmoothingLength)
+weeklyHmaSmoothed = ta.hma(weeklyAVWAP, weeklySmoothingLength)
+
+smoothedWeeklyAVWAP = switch weeklySmoothingType
+    'EMA' => weeklyEmaSmoothed
+    'WMA' => weeklyWmaSmoothed
+    'SMA' => weeklySmaSmoothed
+    'HMA' => weeklyHmaSmoothed
+
+// Smoothed Monthly AVWAP
+monthlyEmaSmoothed = ta.ema(monthlyAVWAP, monthlySmoothingLength)
+monthlyWmaSmoothed = ta.wma(monthlyAVWAP, monthlySmoothingLength)
+monthlySmaSmoothed = ta.sma(monthlyAVWAP, monthlySmoothingLength)
+monthlyHmaSmoothed = ta.hma(monthlyAVWAP, monthlySmoothingLength)
+
+smoothedMonthlyAVWAP = switch monthlySmoothingType
+    'EMA' => monthlyEmaSmoothed
+    'WMA' => monthlyWmaSmoothed
+    'SMA' => monthlySmaSmoothed
+    'HMA' => monthlyHmaSmoothed
+
+// --- Plotting ---
+vwapSlope = smoothedVwapValue - smoothedVwapValue[1]
+vwapColor = vwapSlope > 0 ? vwapUpColor : vwapDownColor
+plot(showVWAP ? vwapValue : na, title = 'VWAP', color = #0000FF)
+plot(showSmoothedVWAP ? smoothedVwapValue : na, title = 'Smoothed VWAP', color = vwapColor, linewidth = 2)
+
+// Plot Anchored VWAPs
+plot(showWeeklyAVWAP ? smoothedWeeklyAVWAP : na, title = 'Weekly AVWAP', color = weeklyAVWAPColor)
+plot(showMonthlyAVWAP ? smoothedMonthlyAVWAP : na, title = 'Monthly AVWAP', color = monthlyAVWAPColor)
+
+// --- VWAP Turning Points ---
+vwapTurnUp = vwapSlope > 0 and vwapSlope[1] <= 0
+vwapTurnDown = vwapSlope < 0 and vwapSlope[1] >= 0
+
+var int barsSinceTurnUp = na
+var int barsSinceTurnDown = na
+
+if vwapTurnUp
+    barsSinceTurnUp := 0
+if vwapTurnDown
+    barsSinceTurnDown := 0
+
+if not na(barsSinceTurnUp)
+    barsSinceTurnUp := barsSinceTurnUp + 1
+if not na(barsSinceTurnDown)
+    barsSinceTurnDown := barsSinceTurnDown + 1
+
+flashColorUp = barsSinceTurnUp < 5 and bar_index % 2 == 0 ? color.yellow : color.white
+flashColorDown = barsSinceTurnDown < 5 and bar_index % 2 == 0 ? color.yellow : color.white
+
+
+// --- END --- VWAP Block
+
+// --- START --- RSI Crossover Block
+// @description Handles the RSI Crossover detection and plotting.
+
+// --- RSI Calculation ---
+rsiValue = ta.rsi(close, rsiLength)
+
+// Smoothed RSI calculation
+rsiEmaSmoothed = ta.ema(rsiValue, rsiSmoothingLength)
+rsiWmaSmoothed = ta.wma(rsiValue, rsiSmoothingLength)
+rsiSmaSmoothed = ta.sma(rsiValue, rsiSmoothingLength)
+rsiHmaSmoothed = ta.hma(rsiValue, rsiSmoothingLength)
+rsiTmaSmoothed = ta.sma(ta.sma(rsiValue, rsiSmoothingLength), rsiSmoothingLength)
+
+
+smoothedRsi = switch rsiSmoothingType
+    'EMA' => rsiEmaSmoothed
+    'WMA' => rsiWmaSmoothed
+    'SMA' => rsiSmaSmoothed
+    'HMA' => rsiHmaSmoothed
+    'TMA' => rsiTmaSmoothed
+    =>
+        rsiSmaSmoothed
+
+rsiCrossover = ta.crossover(smoothedRsi, rsiCrossoverThreshold)
+
+// --- END --- RSI Crossover Block
+
+// --- START --- MP Gann Pivot Block
+// @description Calculates and plots the MP Gann Pivot for the period of Sep 1 to Sep 9.
+var line gannPivotLine = na
+var label gannPivotLabel = na
+// --- Gann Pivot Calculation ---
+// Define the Gann period
+isGannPeriod = month == 9 and dayofmonth >= 1 and dayofmonth <= 9
+
+// Variables to store the cumulative values during the Gann period
+var float gannOpen = na
+var float gannHigh = na
+var float gannLow = na
+var float gannClose = na
+
+// Reset on the first day of the period
+if isGannPeriod and dayofmonth == 1 and dayofmonth[1] != 1
+    gannOpen := open
+    gannHigh := high
+    gannLow := low
+    gannClose := close
+else if isGannPeriod
+    gannHigh := math.max(gannHigh, high)
+    gannLow := math.min(gannLow, low)
+    gannClose := close
+
+// Calculate and plot the pivot after the period ends
+if month == 9 and dayofmonth == 10 and dayofmonth[1] == 9
+    gannPivot = (gannOpen + gannHigh + gannLow + gannClose) / 4
+    if showMPGannPivot
+        line.delete(gannPivotLine)
+        label.delete(gannPivotLabel)
+        gannPivotLine := line.new(bar_index, gannPivot, bar_index + 1, gannPivot, extend = extend.right, color = pdhlColor, width = pdhlWidth, style = line.style_dashed)
+        gannPivotLabel := label.new(time + 86400000, gannPivot, 'MP Gann Pivot: ' + str.tostring(gannPivot, format.mintick), style = label.style_none, textcolor = pdhlColor, xloc = xloc.bar_time)
+
+// --- END --- MP Gann Pivot Block
+
+// --- START --- Signals Block
+// @description Generates and plots buy/sell signals based on VWAP crossover and lunar phase.
+
+// --- Signal Logic ---
+isBullishPhase = lastPurnima > lastAmavasya
+isBearishPhase = lastAmavasya > lastPurnima
+
+buy_signal_raw = ta.crossover(close, smoothedVwapValue)
+sell_signal_raw = ta.crossunder(close, smoothedVwapValue)
+
+buySignal = buy_signal_raw[1] and isBullishPhase
+sellSignal = sell_signal_raw[1] and isBearishPhase
+
+// --- END --- Signals Block
+
+// --- START --- Plotting Block
+// @description Plots all astrological event labels on the chart.
+
+// --- Event Labels ---
+
+// --- Previous Week High/Low for Label Positioning ---
+prevWeekHigh = request.security(syminfo.tickerid, 'W', high[1], lookahead = barmerge.lookahead_on)
+prevWeekLow = request.security(syminfo.tickerid, 'W', low[1], lookahead = barmerge.lookahead_on)
+
+// Fallback for positioning if weekly data is not available
+highestFallback = ta.highest(high, 200)
+lowestFallback = ta.lowest(low, 200)
+stableHigh = na(prevWeekHigh) ? highestFallback : prevWeekHigh
+stableLow = na(prevWeekLow) ? lowestFallback : prevWeekLow
+
+// Define y-coordinates for labels
+yPosAbove = stableHigh + 200 * syminfo.mintick
+yPosBelow = stableLow - 200 * syminfo.mintick
+
+
+// Event plotting logic
+const int max_drawings = 50
+var eventLines = array.new_line()
+var eventLabels = array.new_label()
+var signalLabels = array.new_label()
+var rsiLabels = array.new_label()
+
+if showRSICrossover and rsiCrossover
+    array.push(rsiLabels, label.new(bar_index, high, 'H', style = label.style_label_down, color = color.new(color.blue, 20), textcolor = color.white, size = size.small))
+    array.push(rsiLabels, label.new(bar_index, low, 'L', style = label.style_label_up, color = color.new(color.blue, 20), textcolor = color.white, size = size.small))
+
+if array.size(rsiLabels) > max_drawings * 2 // Allow for two labels per event
+    label.delete(array.shift(rsiLabels))
+    label.delete(array.shift(rsiLabels))
+
+if buySignal and showSignals
+    array.push(signalLabels, label.new(bar_index, low, '🚀 Buy', style = label.style_label_up, color = color.new(color.green, 20), textcolor = color.white, size = size.normal, yloc = yloc.belowbar))
+
+if sellSignal and showSignals
+    array.push(signalLabels, label.new(bar_index, high, '💥 Sell', style = label.style_label_down, color = color.new(color.red, 20), textcolor = color.white, size = size.normal, yloc = yloc.abovebar))
+
+bullishReversalSignal = vwapTurnUp and isBullishPhase
+bearishReversalSignal = vwapTurnDown and isBearishPhase
+
+if bullishReversalSignal
+    array.push(signalLabels, label.new(bar_index, na, '🔥 Reversal Point', yloc = yloc.belowbar, style = label.style_label_up, color = color.new(color.green, 100), textcolor = color.new(color.green, 0), size = size.small))
+
+if bearishReversalSignal
+    array.push(signalLabels, label.new(bar_index, na, '🔥 Reversal Point', yloc = yloc.abovebar, style = label.style_label_down, color = color.new(color.red, 100), textcolor = color.new(color.red, 0), size = size.small))
+
+plotshape(bullishReversalSignal, style = shape.diamond, location = location.belowbar, color = color.new(color.green, 0), size = size.small)
+plotshape(bearishReversalSignal, style = shape.diamond, location = location.abovebar, color = color.new(color.red, 0), size = size.small)
+
+if array.size(signalLabels) > max_drawings
+    label.delete(array.shift(signalLabels))
+
+var amavasyaLabelIdx = 0
+var purnimaLabelIdx = 0
+var pushyaLabelIdx = 0
+var eclipseLabelIdx = 0
+var solsticeEquinoxLabelIdx = 0
+
+if showPurnimaAmavasya and amavasyaLabelIdx < array.size(amavasyaDates)
+    while amavasyaLabelIdx < array.size(amavasyaDates) and array.get(amavasyaDates, amavasyaLabelIdx) <= time
+        if time >= array.get(amavasyaDates, amavasyaLabelIdx) and time[1] < array.get(amavasyaDates, amavasyaLabelIdx)
+            array.push(eventLabels, label.new(x = time, y = yPosAbove, text = '🌑', style = label.style_none, textcolor = #FFFFFF, size = size.huge, tooltip = 'Amavasya', xloc = xloc.bar_time))
+            if showVerticalLines
+                line newLine = line.new(bar_index, low, bar_index, high, color = amavasyaLineColor, width = lineWidth, extend = extend.both)
+                array.push(eventLines, newLine)
+        amavasyaLabelIdx := amavasyaLabelIdx + 1
+
+if showPurnimaAmavasya and purnimaLabelIdx < array.size(purnimaDates)
+    while purnimaLabelIdx < array.size(purnimaDates) and array.get(purnimaDates, purnimaLabelIdx) <= time
+        if time >= array.get(purnimaDates, purnimaLabelIdx) and time[1] < array.get(purnimaDates, purnimaLabelIdx)
+            array.push(eventLabels, label.new(x = time, y = yPosAbove, text = '🌕', style = label.style_none, textcolor = #FFFFFF, size = size.huge, tooltip = 'Purnima', xloc = xloc.bar_time))
+            if showVerticalLines
+                line newLine = line.new(bar_index, low, bar_index, high, color = purnimaLineColor, width = lineWidth, extend = extend.both)
+                array.push(eventLines, newLine)
+        purnimaLabelIdx := purnimaLabelIdx + 1
+
+if showPushyaNakshatra and pushyaLabelIdx < array.size(pushyaNakshatraDates)
+    while pushyaLabelIdx < array.size(pushyaNakshatraDates) and array.get(pushyaNakshatraDates, pushyaLabelIdx) <= time
+        if time >= array.get(pushyaNakshatraDates, pushyaLabelIdx) and time[1] < array.get(pushyaNakshatraDates, pushyaLabelIdx)
+            array.push(eventLabels, label.new(x = time, y = yPosAbove, text = '✨', style = label.style_label_down, color = #800080, textcolor = #FFFFFF, size = size.huge, tooltip = 'Pushya Nakshatra', xloc = xloc.bar_time))
+            if showVerticalLines
+                line newLine = line.new(bar_index, low, bar_index, high, color = pushyaLineColor, width = lineWidth, extend = extend.both)
+                array.push(eventLines, newLine)
+        pushyaLabelIdx := pushyaLabelIdx + 1
+
+if showEclipses and eclipseLabelIdx < array.size(eclipseDates)
+    while eclipseLabelIdx < array.size(eclipseDates) and array.get(eclipseDates, eclipseLabelIdx) <= time
+        if time >= array.get(eclipseDates, eclipseLabelIdx) and time[1] < array.get(eclipseDates, eclipseLabelIdx)
+            array.push(eventLabels, label.new(x = time, y = yPosAbove, text = 'ECL', style = label.style_label_down, color = #FFA500, textcolor = #FFFFFF, size = size.huge, tooltip = 'Eclipse', xloc = xloc.bar_time))
+            if showVerticalLines
+                line newLine = line.new(bar_index, low, bar_index, high, color = eclipseLineColor, width = lineWidth, extend = extend.both)
+                array.push(eventLines, newLine)
+        eclipseLabelIdx := eclipseLabelIdx + 1
+
+if showSolsticesEquinoxes and solsticeEquinoxLabelIdx < array.size(solsticeEquinoxDates)
+    while solsticeEquinoxLabelIdx < array.size(solsticeEquinoxDates) and array.get(solsticeEquinoxDates, solsticeEquinoxLabelIdx) <= time
+        if time >= array.get(solsticeEquinoxDates, solsticeEquinoxLabelIdx) and time[1] < array.get(solsticeEquinoxDates, solsticeEquinoxLabelIdx)
+            array.push(eventLabels, label.new(x = time, y = yPosAbove, text = 'S/E', style = label.style_label_down, color = #FFFF00, textcolor = #000000, size = size.huge, tooltip = 'Solstice/Equinox', xloc = xloc.bar_time))
+            if showVerticalLines
+                line newLine = line.new(bar_index, low, bar_index, high, color = eclipseLineColor, width = lineWidth, extend = extend.both)
+                array.push(eventLines, newLine)
+        solsticeEquinoxLabelIdx := solsticeEquinoxLabelIdx + 1
+
+if array.size(eventLabels) > max_drawings
+    label.delete(array.shift(eventLabels))
+if array.size(eventLines) > max_drawings
+    line.delete(array.shift(eventLines))
+
+// --- Previous Day High/Low ---
+var line pdhLine = na
+var line pdlLine = na
+var label pdhLabel = na
+var label pdlLabel = na
+isNewDay = ta.change(time('D')) != 0
+
+// --- Day Separator ---
+var line daySeparatorLine = na
+if isNewDay and showDaySeparator
+    line.delete(daySeparatorLine)
+    daySeparatorLine := line.new(bar_index, low, bar_index, high, extend = extend.both, color = separatorColor, style = separatorStyle, width = separatorWidth)
+
+
+if isNewDay and showPDHL
+    pdh = request.security(syminfo.tickerid, 'D', high[1])
+    pdl = request.security(syminfo.tickerid, 'D', low[1])
+
+    // Delete old lines and labels
+    line.delete(pdhLine)
+    line.delete(pdlLine)
+    label.delete(pdhLabel)
+    label.delete(pdlLabel)
+
+    // Create new lines and labels
+    pdhLine := line.new(bar_index, pdh, bar_index + 1, pdh, extend = extend.right, color = pdhlColor, width = pdhlWidth, style = line.style_dashed)
+    pdlLine := line.new(bar_index, pdl, bar_index + 1, pdl, extend = extend.right, color = pdhlColor, width = pdhlWidth, style = line.style_dashed)
+    pdhLabel := label.new(time + 86400000, pdh, 'PDH: ' + str.tostring(pdh, format.mintick), style = label.style_none, textcolor = pdhlColor, xloc = xloc.bar_time)
+    pdlLabel := label.new(time + 86400000, pdl, 'PDL: ' + str.tostring(pdl, format.mintick), style = label.style_none, textcolor = pdhlColor, xloc = xloc.bar_time)
+
+// --- Info Table ---
+var table trendTable = table.new(trendTablePosition, 2, 4, border_width = 2, border_color = tableBorderColor)
+var table priceTable = table.new(priceTablePosition, 2, 4, border_width = 2, border_color = tableBorderColor)
+
+if showInfoTables
+    // Clear and set up Trend Table
+    table.clear(trendTable, 0, 0, 1, 3)
+    table.set_bgcolor(trendTable, tableBgColor)
+    table.set_border_width(trendTable, 2)
+
+    // Clear and set up Price Table
+    table.clear(priceTable, 0, 0, 1, 3)
+    table.set_bgcolor(priceTable, tableBgColor)
+    table.set_border_width(priceTable, 2)
+
+    // Find next event
+    nextAmavasya = array.get(amavasyaDates, amavasyaIdx)
+    nextPurnima = array.get(purnimaDates, purnimaIdx)
+
+    nextEventName = ''
+    daysToNextEvent = 0.0
+
+    if nextAmavasya < nextPurnima
+        nextEventName := 'Amavasya'
+        daysToNextEvent := (nextAmavasya - time) / (1000 * 60 * 60 * 24)
+    else
+        nextEventName := 'Purnima'
+        daysToNextEvent := (nextPurnima - time) / (1000 * 60 * 60 * 24)
+
+    bullishBearishEmoji = isBullishPhase ? '🟢' : '🔴'
+    dayName = str.tostring(dayofweek)
+
+    nextEventColor = nextEventName == 'Purnima' ? color.green : color.red
+    table.cell(trendTable, 0, 0, 'Current Trend', text_halign = 'left', text_size = size.small, text_color = color.white)
+    table.cell(trendTable, 1, 0, bullishBearishEmoji, text_halign = 'center', text_size = size.small, text_color = color.white)
+    table.cell(trendTable, 0, 1, 'Next Event', text_halign = 'left', text_size = size.small, text_color = color.white)
+    table.cell(trendTable, 1, 1, nextEventName, text_halign = 'center', text_color = nextEventColor)
+    table.cell(trendTable, 0, 2, 'Days to Event', text_halign = 'left', text_size = size.small, text_color = color.white)
+    table.cell(trendTable, 1, 2, str.tostring(int(daysToNextEvent)), text_halign = 'center', text_color = color.white)
+
+    // Populate Price Table
+    table.cell(priceTable, 0, 0, 'Close', text_halign = 'left', text_size = size.small, text_color = color.white)
+    table.cell(priceTable, 1, 0, str.tostring(int(close)), text_halign = 'center')
+    table.cell(priceTable, 0, 1, 'VWAP', text_halign = 'left', text_size = size.small, text_color = color.white)
+    table.cell(priceTable, 1, 1, str.tostring(int(vwapValue)), text_halign = 'center')
+
+    proximityValue = close - vwapValue
+
+    // Proximity flashing logic
+    proximityBgColor = if bar_index % 2 == 0
+        if proximityValue >= 1 and proximityValue <= 25
+            color.red
+        else if proximityValue <= -1 and proximityValue >= -25
+            color.green
+        else if proximityValue == 0
+            color.orange
+        else
+            tableBgColor
+    else
+        tableBgColor
+
+    table.cell(priceTable, 0, 2, 'Proximity', text_halign = 'left', text_size = size.small, text_color = color.white, bgcolor = proximityBgColor)
+    table.cell(priceTable, 1, 2, str.tostring(int(proximityValue)), text_halign = 'center', bgcolor = proximityBgColor)
+
+// --- Bar Coloring Block ---
+// @description Consolidates all bar coloring logic based on priority.
+
+// High Volume Condition
+volumeSma = ta.sma(volume, 10)
+highVolume = volume > volumeSma * 5
+
+// Flashing Signal Alert Condition
+var int barsSinceSignal = na
+if buySignal or sellSignal
+    barsSinceSignal := 0
+if not na(barsSinceSignal)
+    barsSinceSignal := barsSinceSignal + 1
+flashSignalCondition = not na(barsSinceSignal) and barsSinceSignal <= 3 and bar_index % 2 == 0
+
+// Determine final color with priority (RSI > Flash > High Volume)
+color finalBarColor = if showRSICrossover and rsiCrossover
+    color.new(#00008B, 40)
+else if flashSignalCondition
+    color.new(color.yellow, 50)
+else if colorHighVolume and highVolume
+    color.new(#FFA500, 50)
+else
+    na
+
+barcolor(finalBarColor)
+
+// --- Border for RSI Crossover Candles ---
+plot(showRSICrossover and rsiCrossover ? high : na, "RSI High Border", color = color.new(color.aqua, 0), linewidth = 3, style = plot.style_cross)
+plot(showRSICrossover and rsiCrossover ? low : na, "RSI Low Border", color = color.new(color.aqua, 0), linewidth = 3, style = plot.style_cross)
+
+// --- END --- Plotting Block
+
+// --- START --- Alerts Block
+// @description Defines alert conditions for buy and sell signals.
+
+// --- Alert Conditions ---
+
+alertcondition(buySignal and showBuySellAlerts, title = 'Buy Signal', message = 'Buy Signal: Close crossed above Smoothed VWAP in Bullish Phase')
+alertcondition(sellSignal and showBuySellAlerts, title = 'Sell Signal', message = 'Sell Signal: Close crossed below Smoothed VWAP in Bearish Phase')
+alertcondition(vwapTurnUp and isBullishPhase and showReversalAlerts, title = 'Bullish Reversal', message = 'Bullish Reversal: Smoothed VWAP turned up in Bullish Phase')
+alertcondition(vwapTurnDown and isBearishPhase and showReversalAlerts, title = 'Bearish Reversal', message = 'Bearish Reversal: Smoothed VWAP turned down in Bearish Phase')
+alertcondition(rsiCrossover and showRsiCrossoverAlerts, title = 'RSI Crossover', message = 'RSI crossed above threshold')
+
+// --- END --- Alerts Block
