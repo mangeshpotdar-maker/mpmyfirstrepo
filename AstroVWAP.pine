@@ -34,6 +34,16 @@ emaFilterWidth = input.int(2, title='EMA Filter Width', group='Signal Settings')
 showBuySellAlerts = input.bool(false, title = 'Show Crossover Alerts', group = 'Signal Settings')
 showReversalAlerts = input.bool(true, title = 'Show VWAP Reversal Alerts', group = 'Signal Settings')
 showRsiCrossoverAlerts = input.bool(true, title = 'Show RSI Crossover Alerts', group = 'Signal Settings')
+
+// --- Ultimate Crossover Signal Settings ---
+useUltimateCrossover = input.bool(false, title = 'Use Ultimate Crossover Signal', group = 'Ultimate Crossover Settings')
+ultimateMaType = input.string('EMA', title = 'MA Type', options = ['EMA', 'SMA', 'WMA', 'HMA'], group = 'Ultimate Crossover Settings')
+ultimateMaPeriod = input.int(108, title = 'MA Period', group = 'Ultimate Crossover Settings')
+showUltimateCrossoverAlerts = input.bool(true, title = 'Show Alerts', group = 'Ultimate Crossover Settings')
+colorUltimateCandles = input.bool(true, title = 'Color Candles', group = 'Ultimate Crossover Settings')
+ultimateBullColor = input.color(color.new(color.green, 80), title = 'Bullish Color', group = 'Ultimate Crossover Settings')
+ultimateBearColor = input.color(color.new(color.red, 80), title = 'Bearish Color', group = 'Ultimate Crossover Settings')
+
 showBgColor = input.bool(true, title = 'Show Background Coloring', group = 'Display Settings')
 bullishColor = input.color(DEF_BULLISH_COLOR, title = 'Bullish Color', group = 'Display Settings')
 bearishColor = input.color(DEF_BEARISH_COLOR, title = 'Bearish Color', group = 'Display Settings')
@@ -321,6 +331,25 @@ if month == 9 and dayofmonth == 10 and dayofmonth[1] == 9
 
 // --- END --- MP Gann Pivot Block
 
+// --- START --- Ultimate Crossover Block
+// @description Calculates and plots the Ultimate Crossover Signal.
+
+// --- Calculation ---
+ultimateMa = switch ultimateMaType
+    'EMA' => ta.ema(close, ultimateMaPeriod)
+    'SMA' => ta.sma(close, ultimateMaPeriod)
+    'WMA' => ta.wma(close, ultimateMaPeriod)
+    'HMA' => ta.hma(close, ultimateMaPeriod)
+
+// --- Signal Logic ---
+ultimateBuySignal = ta.crossover(close, ultimateMa)
+ultimateSellSignal = ta.crossunder(close, ultimateMa)
+
+// --- Plotting ---
+plot(useUltimateCrossover ? ultimateMa : na, title='Ultimate MA', color=color.new(#FFD700, 0), linewidth=2)
+
+// --- END --- Ultimate Crossover Block
+
 // --- START --- Signals Block
 // @description Generates and plots buy/sell signals based on VWAP crossover and lunar phase.
 
@@ -383,13 +412,13 @@ if showRSICrossover and rsiCrossover
 if array.size(rsiLabels) > max_drawings
     label.delete(array.shift(rsiLabels))
 
-if showRsiCrossunder and rsiCrossunder
+if showRsiCrossunder and rsiCrossunder and not useUltimateCrossover
     array.push(rsiLabels, label.new(bar_index, low, 'Sell - RSI Below 40', yloc = yloc.belowbar, style = label.style_label_up, color = color.new(color.red, 85), textcolor = color.red, size = size.normal))
 
-if buySignal and showSignals
+if buySignal and showSignals and not useUltimateCrossover
     array.push(signalLabels, label.new(bar_index, low, '🚀 Buy', style = label.style_label_up, color = color.new(color.green, 20), textcolor = color.white, size = size.normal, yloc = yloc.belowbar))
 
-if sellSignal and showSignals
+if sellSignal and showSignals and not useUltimateCrossover
     array.push(signalLabels, label.new(bar_index, high, '💥 Sell', style = label.style_label_down, color = color.new(color.red, 20), textcolor = color.white, size = size.normal, yloc = yloc.abovebar))
 
 bullishReversalSignal = vwapTurnUp and isBullishPhase
@@ -401,8 +430,15 @@ if bullishReversalSignal
 if bearishReversalSignal
     array.push(signalLabels, label.new(bar_index, na, '🔥 Reversal Point', yloc = yloc.abovebar, style = label.style_label_down, color = color.new(color.red, 100), textcolor = color.new(color.red, 0), size = size.small))
 
-plotshape(bullishReversalSignal, style = shape.diamond, location = location.belowbar, color = color.new(color.green, 0), size = size.small)
-plotshape(bearishReversalSignal, style = shape.diamond, location = location.abovebar, color = color.new(color.red, 0), size = size.small)
+// --- Ultimate Crossover Labels ---
+if useUltimateCrossover and ultimateBuySignal
+    label.new(bar_index, low, 'Ultimate Buy', style = label.style_label_up, color = color.new(color.green, 20), textcolor = color.white, size = size.large, yloc = yloc.belowbar)
+
+if useUltimateCrossover and ultimateSellSignal
+    label.new(bar_index, high, 'Ultimate Sell', style = label.style_label_down, color = color.new(color.red, 20), textcolor = color.white, size = size.large, yloc = yloc.abovebar)
+
+plotshape(bullishReversalSignal, style = shape.diamond, location = location.belowbar, color = color.new(color.green, 0), size = size.tiny)
+plotshape(bearishReversalSignal, style = shape.diamond, location = location.abovebar, color = color.new(color.red, 0), size = size.tiny)
 
 if array.size(signalLabels) > max_drawings
     label.delete(array.shift(signalLabels))
@@ -574,6 +610,7 @@ if isNewDay and showPDHL
 // --- Info Table ---
 var table trendTable = table.new(trendTablePosition, 2, 4, border_width = 2, border_color = tableBorderColor)
 var table priceTable = table.new(priceTablePosition, 2, 6, border_width = 2, border_color = tableBorderColor)
+var table ultimateSignalTable = table.new(position.top_right, 2, 3, border_width = 2, border_color = tableBorderColor)
 
 if showInfoTables
     // Clear and set up Trend Table
@@ -659,6 +696,26 @@ if showInfoTables
     table.cell(priceTable, 0, 4, 'RSI Signal Type', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
     table.cell(priceTable, 1, 4, rsiSignalText, text_halign = 'center', text_size = size.small, text_color = rsiSignalColor)
 
+    // Populate Ultimate Signal Table
+    if useUltimateCrossover
+        table.clear(ultimateSignalTable, 0, 0, 1, 2)
+        table.set_bgcolor(ultimateSignalTable, tableBgColor)
+        table.set_border_width(ultimateSignalTable, 2)
+
+        var string ultimateSignalRecommendation = "Neutral"
+        if ultimateBuySignal
+            ultimateSignalRecommendation := "Buy"
+        if ultimateSellSignal
+            ultimateSignalRecommendation := "Sell"
+
+        signalColor = ultimateSignalRecommendation == "Buy" ? color.green : ultimateSignalRecommendation == "Sell" ? color.red : color.white
+        distanceFromMa = close - ultimateMa
+
+        table.cell(ultimateSignalTable, 0, 0, 'Ultimate Signal', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
+        table.cell(ultimateSignalTable, 1, 0, ultimateSignalRecommendation, text_halign = 'center', text_size = size.small, text_color = signalColor)
+        table.cell(ultimateSignalTable, 0, 1, 'Distance from MA', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
+        table.cell(ultimateSignalTable, 1, 1, str.tostring(distanceFromMa, '#.##'), text_halign = 'center', text_size = size.small, text_color = color.white)
+
 // --- Bar Coloring Block ---
 // @description Consolidates all bar coloring logic based on priority.
 
@@ -674,8 +731,10 @@ if not na(barsSinceSignal)
     barsSinceSignal := barsSinceSignal + 1
 flashSignalCondition = not na(barsSinceSignal) and barsSinceSignal <= 3 and bar_index % 2 == 0
 
-// Determine final color with priority (RSI > Flash > High Volume)
-color finalBarColor = if showRSICrossover and rsiCrossover
+// Determine final color with priority (Ultimate > RSI > Flash > High Volume)
+color finalBarColor = if useUltimateCrossover and colorUltimateCandles
+    close > ultimateMa ? ultimateBullColor : ultimateBearColor
+else if showRSICrossover and rsiCrossover
     color.new(#00008B, 40)
 else if showRsiCrossunder and rsiCrossunder
     rsiCrossunderColor
@@ -707,5 +766,7 @@ alertcondition(vwapTurnUp and isBullishPhase and showReversalAlerts, title = 'Bu
 alertcondition(vwapTurnDown and isBearishPhase and showReversalAlerts, title = 'Bearish Reversal', message = 'Bearish Reversal: Smoothed VWAP turned down in Bearish Phase')
 alertcondition(rsiCrossover and showRsiCrossoverAlerts, title = 'Buy - RSI above 60', message = 'Buy Signal: Smoothed RSI crossed above 60')
 alertcondition(rsiCrossunder and showRsiCrossoverAlerts, title = 'Sell - RSI Below 40', message = 'Sell Signal: Smoothed RSI crossed below 40')
+alertcondition(useUltimateCrossover and ultimateBuySignal and showUltimateCrossoverAlerts, title = 'Ultimate Buy Signal', message = 'Ultimate Buy: Close crossed above ' + ultimateMaType + '(' + str.tostring(ultimateMaPeriod) + ')')
+alertcondition(useUltimateCrossover and ultimateSellSignal and showUltimateCrossoverAlerts, title = 'Ultimate Sell Signal', message = 'Ultimate Sell: Close crossed below ' + ultimateMaType + '(' + str.tostring(ultimateMaPeriod) + ')')
 
 // --- END --- Alerts Block
