@@ -1,5 +1,5 @@
 //@version=6
-indicator('Astro VWAP Indicator', 'Astro VWAP', overlay = true, show_last = 0)
+indicator('Astro VWAP Indicator', 'Astro VWAP', overlay = true)
 
 // --- START --- Astro Block
 // @description Holds all astrological data and settings.
@@ -21,7 +21,6 @@ ultimateMaType = input.string('EMA', title = 'MA Type', options = ['EMA', 'SMA',
 ultimateMaPeriod = input.int(108, title = 'MA Period', group = 'Ultimate Crossover Settings')
 ultimateMaColor = input.color(color.new(#FFD700, 0), title='MA Color', group='Ultimate Crossover Settings')
 ultimateMaWidth = input.int(2, title='MA Width', group='Ultimate Crossover Settings')
-ultimateMaStyle = input.string(line.style_solid, 'MA Style', options=[line.style_solid, line.style_dotted, line.style_dashed], group='Ultimate Crossover Settings')
 showUltimateCrossoverAlerts = input.bool(true, title = 'Show Alerts', group = 'Ultimate Crossover Settings')
 colorUltimateCandles = input.bool(true, title = 'Color Candles', group = 'Ultimate Crossover Settings')
 ultimateBullColor = input.color(color.new(#40a998, 0), title = 'Bullish Color', group = 'Ultimate Crossover Settings')
@@ -352,7 +351,7 @@ ultimateBuySignal = ta.crossover(close, ultimateMa)
 ultimateSellSignal = ta.crossunder(close, ultimateMa)
 
 // --- Plotting ---
-plot(useUltimateCrossover ? ultimateMa : na, title='Ultimate MA', color=ultimateMaColor, linewidth=ultimateMaWidth, style=ultimateMaStyle)
+plot(useUltimateCrossover ? ultimateMa : na, title='Ultimate MA', color=ultimateMaColor, linewidth=ultimateMaWidth)
 
 // --- END --- Ultimate Crossover Block
 
