@@ -55,8 +55,8 @@ rsiCrossoverThreshold = input.int(60, title = 'RSI Crossover Threshold', group =
 showRsiCrossunder = input.bool(true, title = 'Show RSI Crossunder Signal', group = 'RSI Settings')
 rsiCrossunderThreshold = input.int(40, title = 'RSI Crossunder Threshold', group = 'RSI Settings')
 rsiCrossunderColor = input.color(color.new(#9C27B0, 40), title = 'RSI Crossunder Color', group = 'RSI Settings')
-rsiSmoothingType = input.string('SMA', title = 'RSI Smoothing Type', options = ['SMA', 'EMA', 'TMA', 'HMA'], group = 'RSI Settings')
-rsiSmoothingLength = input.int(14, title = 'RSI Smoothing Length', group = 'RSI Settings')
+rsiSmoothingType = input.string('EMA', title = 'RSI Smoothing Type', options = ['SMA', 'EMA', 'TMA', 'HMA'], group = 'RSI Settings')
+rsiSmoothingLength = input.int(3, title = 'RSI Smoothing Length', group = 'RSI Settings')
 showRsiCrossoverLines = input.bool(true, title = 'Show RSI Crossover Lines & Labels', group = 'RSI Settings')
 
 
@@ -259,7 +259,10 @@ rsiEmaSmoothed = ta.ema(rsiValue, rsiSmoothingLength)
 rsiWmaSmoothed = ta.wma(rsiValue, rsiSmoothingLength)
 rsiSmaSmoothed = ta.sma(rsiValue, rsiSmoothingLength)
 rsiHmaSmoothed = ta.hma(rsiValue, rsiSmoothingLength)
-rsiTmaSmoothed = ta.sma(ta.sma(rsiValue, rsiSmoothingLength), rsiSmoothingLength)
+// Correct TMA calculation
+tma_len1 = math.ceil(rsiSmoothingLength / 2)
+tma_len2 = math.floor(rsiSmoothingLength / 2) + 1
+rsiTmaSmoothed = ta.sma(ta.sma(rsiValue, tma_len1), tma_len2)
 
 
 smoothedRsi = switch rsiSmoothingType
@@ -515,7 +518,7 @@ if isNewDay and showPDHL
 
 // --- Info Table ---
 var table trendTable = table.new(trendTablePosition, 2, 4, border_width = 2, border_color = tableBorderColor)
-var table priceTable = table.new(priceTablePosition, 2, 5, border_width = 2, border_color = tableBorderColor)
+var table priceTable = table.new(priceTablePosition, 2, 6, border_width = 2, border_color = tableBorderColor)
 
 if showInfoTables
     // Clear and set up Trend Table
@@ -524,7 +527,7 @@ if showInfoTables
     table.set_border_width(trendTable, 2)
 
     // Clear and set up Price Table
-    table.clear(priceTable, 0, 0, 1, 4)
+    table.clear(priceTable, 0, 0, 1, 5)
     table.set_bgcolor(priceTable, tableBgColor)
     table.set_border_width(priceTable, 2)
 
@@ -544,19 +547,20 @@ if showInfoTables
 
     bullishBearishEmoji = isBullishPhase ? '🟢' : '🔴'
     dayName = str.tostring(dayofweek)
+    const color HEADER_TEXT_COLOR = #c8cce6
 
     nextEventColor = nextEventName == 'Purnima' ? color.green : color.red
-    table.cell(trendTable, 0, 0, 'Current Trend', text_halign = 'left', text_size = size.normal, text_color = color.white)
+    table.cell(trendTable, 0, 0, 'Current Trend', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
     table.cell(trendTable, 1, 0, bullishBearishEmoji, text_halign = 'center', text_size = size.small, text_color = color.white)
-    table.cell(trendTable, 0, 1, 'Next Event', text_halign = 'left', text_size = size.normal, text_color = color.white)
+    table.cell(trendTable, 0, 1, 'Next Event', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
     table.cell(trendTable, 1, 1, nextEventName, text_halign = 'center', text_size = size.small, text_color = nextEventColor)
-    table.cell(trendTable, 0, 2, 'Days to Event', text_halign = 'left', text_size = size.normal, text_color = color.white)
+    table.cell(trendTable, 0, 2, 'Days to Event', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
     table.cell(trendTable, 1, 2, str.tostring(int(daysToNextEvent)), text_halign = 'center', text_size = size.small, text_color = color.white)
 
     // Populate Price Table
-    table.cell(priceTable, 0, 0, 'Close', text_halign = 'left', text_size = size.normal, text_color = color.white)
+    table.cell(priceTable, 0, 0, 'Close', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
     table.cell(priceTable, 1, 0, str.tostring(int(close)), text_halign = 'center', text_size = size.small)
-    table.cell(priceTable, 0, 1, 'VWAP', text_halign = 'left', text_size = size.normal, text_color = color.white)
+    table.cell(priceTable, 0, 1, 'VWAP', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
     table.cell(priceTable, 1, 1, str.tostring(int(vwapValue)), text_halign = 'center', text_size = size.small)
 
     proximityValue = close - vwapValue
@@ -574,7 +578,7 @@ if showInfoTables
     else
         tableBgColor
 
-    table.cell(priceTable, 0, 2, 'Proximity', text_halign = 'left', text_size = size.normal, text_color = color.white, bgcolor = proximityBgColor)
+    table.cell(priceTable, 0, 2, 'Proximity', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR, bgcolor = proximityBgColor)
     table.cell(priceTable, 1, 2, str.tostring(int(proximityValue)), text_halign = 'center', text_size = size.small, bgcolor = proximityBgColor)
 
     // Add Smoothed RSI to Price Table
@@ -590,8 +594,15 @@ if showInfoTables
     else
         rsiText := 'No Trade Zone'
 
-    table.cell(priceTable, 0, 3, 'Smoothed RSI', text_halign = 'left', text_size = size.normal, text_color = color.white)
+    table.cell(priceTable, 0, 3, 'Smoothed RSI', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
     table.cell(priceTable, 1, 3, rsiText, text_halign = 'center', text_size = size.small, text_color = rsiColor)
+
+    // Add RSI Signal Type to Price Table
+    rsiSignalText = rsiCrossover ? "Blue" : "White"
+    rsiSignalColor = rsiCrossover ? color.blue : color.white
+
+    table.cell(priceTable, 0, 4, 'RSI Signal Type', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
+    table.cell(priceTable, 1, 4, rsiSignalText, text_halign = 'center', text_size = size.small, text_color = rsiSignalColor)
 
 // --- Bar Coloring Block ---
 // @description Consolidates all bar coloring logic based on priority.
@@ -623,8 +634,8 @@ else
 barcolor(finalBarColor)
 
 // --- Border for RSI Crossover Candles ---
-plot(showRSICrossover and rsiCrossover ? high : na, "RSI High Border", color = color.new(color.aqua, 0), linewidth = 3, style = plot.style_cross)
-plot(showRSICrossover and rsiCrossover ? low : na, "RSI Low Border", color = color.new(color.aqua, 0), linewidth = 3, style = plot.style_cross)
+plot(showRSICrossover and rsiCrossover ? high : na, "RSI High Border", color = color.new(color.aqua, 70), linewidth = 5, style = plot.style_cross)
+plot(showRSICrossover and rsiCrossover ? low : na, "RSI Low Border", color = color.new(color.aqua, 70), linewidth = 5, style = plot.style_cross)
 
 // --- END --- Plotting Block
 
