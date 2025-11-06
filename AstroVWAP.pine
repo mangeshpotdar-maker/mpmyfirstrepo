@@ -406,7 +406,7 @@ var eventLabels = array.new_label()
 var signalLabels = array.new_label()
 var rsiLabels = array.new_label()
 
-if showRSICrossover and rsiCrossover
+if showRSICrossover and rsiCrossover and not useUltimateCrossover
     array.push(rsiLabels, label.new(bar_index, high, 'Buy - RSI above 60', yloc = yloc.abovebar, style = label.style_label_down, color = color.new(color.green, 85), textcolor = color.green, size = size.normal))
 
 if array.size(rsiLabels) > max_drawings
@@ -424,10 +424,10 @@ if sellSignal and showSignals and not useUltimateCrossover
 bullishReversalSignal = vwapTurnUp and isBullishPhase
 bearishReversalSignal = vwapTurnDown and isBearishPhase
 
-if bullishReversalSignal
+if bullishReversalSignal and not useUltimateCrossover
     array.push(signalLabels, label.new(bar_index, na, '🔥 Reversal Point', yloc = yloc.belowbar, style = label.style_label_up, color = color.new(color.green, 100), textcolor = color.new(color.green, 0), size = size.small))
 
-if bearishReversalSignal
+if bearishReversalSignal and not useUltimateCrossover
     array.push(signalLabels, label.new(bar_index, na, '🔥 Reversal Point', yloc = yloc.abovebar, style = label.style_label_down, color = color.new(color.red, 100), textcolor = color.new(color.red, 0), size = size.small))
 
 // --- Ultimate Crossover Labels ---
@@ -766,7 +766,7 @@ alertcondition(vwapTurnUp and isBullishPhase and showReversalAlerts, title = 'Bu
 alertcondition(vwapTurnDown and isBearishPhase and showReversalAlerts, title = 'Bearish Reversal', message = 'Bearish Reversal: Smoothed VWAP turned down in Bearish Phase')
 alertcondition(rsiCrossover and showRsiCrossoverAlerts, title = 'Buy - RSI above 60', message = 'Buy Signal: Smoothed RSI crossed above 60')
 alertcondition(rsiCrossunder and showRsiCrossoverAlerts, title = 'Sell - RSI Below 40', message = 'Sell Signal: Smoothed RSI crossed below 40')
-alertcondition(useUltimateCrossover and ultimateBuySignal and showUltimateCrossoverAlerts, title = 'Ultimate Buy Signal', message = 'Ultimate Buy: Close crossed above ' + ultimateMaType + '(' + str.tostring(ultimateMaPeriod) + ')')
-alertcondition(useUltimateCrossover and ultimateSellSignal and showUltimateCrossoverAlerts, title = 'Ultimate Sell Signal', message = 'Ultimate Sell: Close crossed below ' + ultimateMaType + '(' + str.tostring(ultimateMaPeriod) + ')')
+alertcondition(useUltimateCrossover and ultimateBuySignal and showUltimateCrossoverAlerts, title = 'Ultimate Buy Signal', message = 'Ultimate Buy: Close crossed above the selected Moving Average')
+alertcondition(useUltimateCrossover and ultimateSellSignal and showUltimateCrossoverAlerts, title = 'Ultimate Sell Signal', message = 'Ultimate Sell: Close crossed below the selected Moving Average')
 
 // --- END --- Alerts Block
