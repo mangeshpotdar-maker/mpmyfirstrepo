@@ -5,8 +5,8 @@ indicator('Astro VWAP Indicator', 'Astro VWAP', overlay = true)
 // @description Holds all astrological data and settings.
 
 // --- Default Color Constants ---
-const color DEF_BULLISH_COLOR = color.new(#c8e6c9, 55)
-const color DEF_BEARISH_COLOR = color.new(#fccbcd, 55)
+const color DEF_BULLISH_COLOR = color.new(#66bb6a, 86)
+const color DEF_BEARISH_COLOR = color.new(#ffcc80, 50)
 const color DEF_PDHL_COLOR = #0000FF
 const color DEF_VWAP_UP_COLOR = #a5f411
 const color DEF_VWAP_DOWN_COLOR = #f20f22
@@ -44,6 +44,12 @@ showInfoTables = input.bool(true, title = 'Show Info Tables', group = 'Display S
 colorHighVolume = input.bool(true, title = 'Color High Volume Candles', group = 'Display Settings')
 showRSICrossover = input.bool(true, title = 'Show RSI Crossover Candles', group = 'Display Settings')
 showMPGannPivot = input.bool(true, title = 'Show MP Gann Pivot', group = 'Display Settings')
+
+// --- Opening Range Settings ---
+showOpeningRange = input.bool(true, title = 'Show Opening Range H/L', group = 'Opening Range Settings')
+openingRangeDuration = input.string('15 min', 'Duration', options = ['15 min', '30 min', '1 Hour', '75 Min', '2 Hour'], group = 'Opening Range Settings')
+openingRangeColor = input.color(DEF_PDHL_COLOR, title = 'Color', group = 'Opening Range Settings')
+openingRangeWidth = input.int(2, title = 'Width', group = 'Opening Range Settings')
 
 
 vwapUpColor = input.color(DEF_VWAP_UP_COLOR, title = 'VWAP Up Color', group = 'VWAP Settings')
@@ -372,15 +378,13 @@ var signalLabels = array.new_label()
 var rsiLabels = array.new_label()
 
 if showRSICrossover and rsiCrossover
-    array.push(rsiLabels, label.new(bar_index, high, 'H', style = label.style_label_down, color = color.new(color.blue, 20), textcolor = color.white, size = size.small))
-    array.push(rsiLabels, label.new(bar_index, low, 'L', style = label.style_label_up, color = color.new(color.blue, 20), textcolor = color.white, size = size.small))
+    array.push(rsiLabels, label.new(bar_index, high, 'Buy - RSI above 60', yloc = yloc.abovebar, style = label.style_label_down, color = color.new(color.green, 85), textcolor = color.green, size = size.normal))
 
-if array.size(rsiLabels) > max_drawings * 2 // Allow for two labels per event
-    label.delete(array.shift(rsiLabels))
+if array.size(rsiLabels) > max_drawings
     label.delete(array.shift(rsiLabels))
 
 if showRsiCrossunder and rsiCrossunder
-    array.push(rsiLabels, label.new(bar_index, high, 'RSI < 40', style = label.style_label_down, color = rsiCrossunderColor, textcolor = color.white, size = size.small))
+    array.push(rsiLabels, label.new(bar_index, low, 'Sell - RSI Below 40', yloc = yloc.belowbar, style = label.style_label_up, color = color.new(color.red, 85), textcolor = color.red, size = size.normal))
 
 if buySignal and showSignals
     array.push(signalLabels, label.new(bar_index, low, '🚀 Buy', style = label.style_label_up, color = color.new(color.green, 20), textcolor = color.white, size = size.normal, yloc = yloc.belowbar))
@@ -498,6 +502,44 @@ var line daySeparatorLine = na
 if isNewDay and showDaySeparator
     line.delete(daySeparatorLine)
     daySeparatorLine := line.new(bar_index, low, bar_index, high, extend = extend.both, color = separatorColor, style = separatorStyle, width = separatorWidth)
+
+// --- Opening Range High/Low ---
+var line orhLine = na
+var line orlLine = na
+var label orhLabel = na
+var label orlLabel = na
+
+var float openingRangeHigh = na
+var float openingRangeLow = na
+var int openingRangeEndTime = na
+
+durationMs = switch openingRangeDuration
+    '15 min' => 15 * 60 * 1000
+    '30 min' => 30 * 60 * 1000
+    '1 Hour' => 60 * 60 * 1000
+    '75 Min' => 75 * 60 * 1000
+    '2 Hour' => 120 * 60 * 1000
+    => 15 * 60 * 1000 // Default
+
+if isNewDay
+    openingRangeEndTime := time + durationMs
+    openingRangeHigh := high
+    openingRangeLow := low
+    // Delete previous day's lines and labels
+    line.delete(orhLine)
+    line.delete(orlLine)
+    label.delete(orhLabel)
+    label.delete(orlLabel)
+
+if time < openingRangeEndTime and not na(openingRangeHigh)
+    openingRangeHigh := math.max(openingRangeHigh, high)
+    openingRangeLow := math.min(openingRangeLow, low)
+    // Draw the lines for the first time after the range ends
+    if time[1] < openingRangeEndTime and time >= openingRangeEndTime and showOpeningRange
+        orhLine := line.new(bar_index, openingRangeHigh, bar_index + 1, openingRangeHigh, extend = extend.right, color = openingRangeColor, width = openingRangeWidth, style = line.style_dashed)
+        orlLine := line.new(bar_index, openingRangeLow, bar_index + 1, openingRangeLow, extend = extend.right, color = openingRangeColor, width = openingRangeWidth, style = line.style_dashed)
+        orhLabel := label.new(time + 86400000, openingRangeHigh, 'ORH: ' + str.tostring(openingRangeHigh, format.mintick), style = label.style_none, textcolor = openingRangeColor, xloc = xloc.bar_time)
+        orlLabel := label.new(time + 86400000, openingRangeLow, 'ORL: ' + str.tostring(openingRangeLow, format.mintick), style = label.style_none, textcolor = openingRangeColor, xloc = xloc.bar_time)
 
 
 if isNewDay and showPDHL
@@ -636,6 +678,8 @@ barcolor(finalBarColor)
 // --- Border for RSI Crossover Candles ---
 plot(showRSICrossover and rsiCrossover ? high : na, "RSI High Border", color = color.new(color.aqua, 70), linewidth = 5, style = plot.style_cross)
 plot(showRSICrossover and rsiCrossover ? low : na, "RSI Low Border", color = color.new(color.aqua, 70), linewidth = 5, style = plot.style_cross)
+plot(showRsiCrossunder and rsiCrossunder ? high : na, "RSI High Border", color = color.new(color.fuchsia, 70), linewidth = 5, style = plot.style_cross)
+plot(showRsiCrossunder and rsiCrossunder ? low : na, "RSI Low Border", color = color.new(color.fuchsia, 70), linewidth = 5, style = plot.style_cross)
 
 // --- END --- Plotting Block
 
@@ -648,6 +692,7 @@ alertcondition(buySignal and showBuySellAlerts, title = 'Buy Signal', message = 
 alertcondition(sellSignal and showBuySellAlerts, title = 'Sell Signal', message = 'Sell Signal: Close crossed below Smoothed VWAP in Bearish Phase')
 alertcondition(vwapTurnUp and isBullishPhase and showReversalAlerts, title = 'Bullish Reversal', message = 'Bullish Reversal: Smoothed VWAP turned up in Bullish Phase')
 alertcondition(vwapTurnDown and isBearishPhase and showReversalAlerts, title = 'Bearish Reversal', message = 'Bearish Reversal: Smoothed VWAP turned down in Bearish Phase')
-alertcondition(rsiCrossover and showRsiCrossoverAlerts, title = 'RSI Crossover', message = 'RSI crossed above threshold')
+alertcondition(rsiCrossover and showRsiCrossoverAlerts, title = 'Buy - RSI above 60', message = 'Buy Signal: Smoothed RSI crossed above 60')
+alertcondition(rsiCrossunder and showRsiCrossoverAlerts, title = 'Sell - RSI Below 40', message = 'Sell Signal: Smoothed RSI crossed below 40')
 
 // --- END --- Alerts Block
