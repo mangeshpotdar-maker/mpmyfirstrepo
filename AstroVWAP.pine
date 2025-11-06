@@ -1,5 +1,5 @@
 //@version=6
-indicator('Astro VWAP Indicator', 'Astro VWAP', overlay = true)
+indicator('Astro VWAP Indicator', 'Astro VWAP', overlay = true, show_last = 0)
 
 // --- START --- Astro Block
 // @description Holds all astrological data and settings.
@@ -14,6 +14,19 @@ const color DEF_AMAVASYA_LINE_COLOR = #FF000080
 const color DEF_PURNIMA_LINE_COLOR = #00800080
 const color DEF_PUSHYA_LINE_COLOR = #FFFF0080
 const color DEF_ECLIPSE_LINE_COLOR = #80808080
+
+// --- Ultimate Crossover Signal Settings ---
+useUltimateCrossover = input.bool(true, title = 'Use Ultimate Crossover Signal', group = 'Ultimate Crossover Settings')
+ultimateMaType = input.string('EMA', title = 'MA Type', options = ['EMA', 'SMA', 'WMA', 'HMA'], group = 'Ultimate Crossover Settings')
+ultimateMaPeriod = input.int(108, title = 'MA Period', group = 'Ultimate Crossover Settings')
+ultimateMaColor = input.color(color.new(#FFD700, 0), title='MA Color', group='Ultimate Crossover Settings')
+ultimateMaWidth = input.int(2, title='MA Width', group='Ultimate Crossover Settings')
+ultimateMaStyle = input.string(line.style_solid, 'MA Style', options=[line.style_solid, line.style_dotted, line.style_dashed], group='Ultimate Crossover Settings')
+showUltimateCrossoverAlerts = input.bool(true, title = 'Show Alerts', group = 'Ultimate Crossover Settings')
+colorUltimateCandles = input.bool(true, title = 'Color Candles', group = 'Ultimate Crossover Settings')
+ultimateBullColor = input.color(color.new(#40a998, 0), title = 'Bullish Color', group = 'Ultimate Crossover Settings')
+ultimateBearColor = input.color(color.new(#f02131, 90), title = 'Bearish Color', group = 'Ultimate Crossover Settings')
+colorProximityCandles = input.bool(true, title = 'Color Proximity Candles', group = 'Ultimate Crossover Settings')
 
 // --- Main Settings ---
 showPurnimaAmavasya = input.bool(true, title = 'Show Purnima/Amavasya Events', group = 'Display Settings')
@@ -35,22 +48,15 @@ showBuySellAlerts = input.bool(false, title = 'Show Crossover Alerts', group = '
 showReversalAlerts = input.bool(true, title = 'Show VWAP Reversal Alerts', group = 'Signal Settings')
 showRsiCrossoverAlerts = input.bool(true, title = 'Show RSI Crossover Alerts', group = 'Signal Settings')
 
-// --- Ultimate Crossover Signal Settings ---
-useUltimateCrossover = input.bool(false, title = 'Use Ultimate Crossover Signal', group = 'Ultimate Crossover Settings')
-ultimateMaType = input.string('EMA', title = 'MA Type', options = ['EMA', 'SMA', 'WMA', 'HMA'], group = 'Ultimate Crossover Settings')
-ultimateMaPeriod = input.int(108, title = 'MA Period', group = 'Ultimate Crossover Settings')
-showUltimateCrossoverAlerts = input.bool(true, title = 'Show Alerts', group = 'Ultimate Crossover Settings')
-colorUltimateCandles = input.bool(true, title = 'Color Candles', group = 'Ultimate Crossover Settings')
-ultimateBullColor = input.color(color.new(color.green, 80), title = 'Bullish Color', group = 'Ultimate Crossover Settings')
-ultimateBearColor = input.color(color.new(color.red, 80), title = 'Bearish Color', group = 'Ultimate Crossover Settings')
-
 showBgColor = input.bool(true, title = 'Show Background Coloring', group = 'Display Settings')
 bullishColor = input.color(DEF_BULLISH_COLOR, title = 'Bullish Color', group = 'Display Settings')
 bearishColor = input.color(DEF_BEARISH_COLOR, title = 'Bearish Color', group = 'Display Settings')
 showPDHL = input.bool(true, title = 'Show Previous Day High/Low', group = 'Display Settings')
 pdhlColor = input.color(DEF_PDHL_COLOR, title = 'PDHL Color', group = 'Display Settings')
 pdhlWidth = input.int(2, title = 'PDHL Width', group = 'Display Settings')
-showInfoTables = input.bool(true, title = 'Show Info Tables', group = 'Display Settings')
+showTrendTable = input.bool(true, title = 'Show Trend Table', group = 'Table Settings')
+showPriceTable = input.bool(true, title = 'Show Price Table', group = 'Table Settings')
+showUltimateSignalTable = input.bool(true, title = 'Show Ultimate Signal Table', group = 'Table Settings')
 colorHighVolume = input.bool(true, title = 'Color High Volume Candles', group = 'Display Settings')
 showRSICrossover = input.bool(true, title = 'Show RSI Crossover Candles', group = 'Display Settings')
 showMPGannPivot = input.bool(true, title = 'Show MP Gann Pivot', group = 'Display Settings')
@@ -346,7 +352,7 @@ ultimateBuySignal = ta.crossover(close, ultimateMa)
 ultimateSellSignal = ta.crossunder(close, ultimateMa)
 
 // --- Plotting ---
-plot(useUltimateCrossover ? ultimateMa : na, title='Ultimate MA', color=color.new(#FFD700, 0), linewidth=2)
+plot(useUltimateCrossover ? ultimateMa : na, title='Ultimate MA', color=ultimateMaColor, linewidth=ultimateMaWidth, style=ultimateMaStyle)
 
 // --- END --- Ultimate Crossover Block
 
@@ -432,10 +438,10 @@ if bearishReversalSignal and not useUltimateCrossover
 
 // --- Ultimate Crossover Labels ---
 if useUltimateCrossover and ultimateBuySignal
-    label.new(bar_index, low, 'Ultimate Buy', style = label.style_label_up, color = color.new(color.green, 20), textcolor = color.white, size = size.large, yloc = yloc.belowbar)
+    label.new(bar_index, low, 'Ultimate Buy', style = label.style_label_up, color = color.new(color.green, 20), textcolor = color.white, size = size.normal, yloc = yloc.belowbar)
 
 if useUltimateCrossover and ultimateSellSignal
-    label.new(bar_index, high, 'Ultimate Sell', style = label.style_label_down, color = color.new(color.red, 20), textcolor = color.white, size = size.large, yloc = yloc.abovebar)
+    label.new(bar_index, high, 'Ultimate Sell', style = label.style_label_down, color = color.new(color.red, 20), textcolor = color.white, size = size.normal, yloc = yloc.abovebar)
 
 plotshape(bullishReversalSignal, style = shape.diamond, location = location.belowbar, color = color.new(color.green, 0), size = size.tiny)
 plotshape(bearishReversalSignal, style = shape.diamond, location = location.abovebar, color = color.new(color.red, 0), size = size.tiny)
@@ -610,49 +616,43 @@ if isNewDay and showPDHL
 // --- Info Table ---
 var table trendTable = table.new(trendTablePosition, 2, 4, border_width = 2, border_color = tableBorderColor)
 var table priceTable = table.new(priceTablePosition, 2, 6, border_width = 2, border_color = tableBorderColor)
-var table ultimateSignalTable = table.new(position.top_right, 2, 3, border_width = 2, border_color = tableBorderColor)
+var table ultimateSignalTable = table.new(position.top_right, 2, 4, border_width = 2, border_color = tableBorderColor)
 
-if showInfoTables
+if showTrendTable
     // Clear and set up Trend Table
     table.clear(trendTable, 0, 0, 1, 3)
     table.set_bgcolor(trendTable, tableBgColor)
     table.set_border_width(trendTable, 2)
-
-    // Clear and set up Price Table
-    table.clear(priceTable, 0, 0, 1, 5)
-    table.set_bgcolor(priceTable, tableBgColor)
-    table.set_border_width(priceTable, 2)
-
-    // Find next event
     nextAmavasya = array.get(amavasyaDates, amavasyaIdx)
     nextPurnima = array.get(purnimaDates, purnimaIdx)
-
     nextEventName = ''
     daysToNextEvent = 0.0
-
     if nextAmavasya < nextPurnima
         nextEventName := 'Amavasya'
         daysToNextEvent := (nextAmavasya - time) / (1000 * 60 * 60 * 24)
     else
         nextEventName := 'Purnima'
         daysToNextEvent := (nextPurnima - time) / (1000 * 60 * 60 * 24)
-
     bullishBearishEmoji = isBullishPhase ? '🟢' : '🔴'
     dayName = str.tostring(dayofweek)
-    const color HEADER_TEXT_COLOR = #1414e3
-
     nextEventColor = nextEventName == 'Purnima' ? color.green : color.red
-    table.cell(trendTable, 0, 0, 'Current Trend', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
+    table.cell(trendTable, 0, 0, 'Current Trend', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
     table.cell(trendTable, 1, 0, bullishBearishEmoji, text_halign = 'center', text_size = size.small, text_color = color.white)
-    table.cell(trendTable, 0, 1, 'Next Event', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
+    table.cell(trendTable, 0, 1, 'Next Event', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
     table.cell(trendTable, 1, 1, nextEventName, text_halign = 'center', text_size = size.small, text_color = nextEventColor)
-    table.cell(trendTable, 0, 2, 'Days to Event', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
+    table.cell(trendTable, 0, 2, 'Days to Event', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
     table.cell(trendTable, 1, 2, str.tostring(int(daysToNextEvent)), text_halign = 'center', text_size = size.small, text_color = color.white)
 
+if showPriceTable
+    // Clear and set up Price Table
+    table.clear(priceTable, 0, 0, 1, 5)
+    table.set_bgcolor(priceTable, tableBgColor)
+    table.set_border_width(priceTable, 2)
+
     // Populate Price Table
-    table.cell(priceTable, 0, 0, 'Close', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
+    table.cell(priceTable, 0, 0, 'Close', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
     table.cell(priceTable, 1, 0, str.tostring(int(close)), text_halign = 'center', text_size = size.small)
-    table.cell(priceTable, 0, 1, 'VWAP', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
+    table.cell(priceTable, 0, 1, 'VWAP', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
     table.cell(priceTable, 1, 1, str.tostring(int(vwapValue)), text_halign = 'center', text_size = size.small)
 
     proximityValue = close - vwapValue
@@ -670,7 +670,7 @@ if showInfoTables
     else
         tableBgColor
 
-    table.cell(priceTable, 0, 2, 'Proximity', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR, bgcolor = proximityBgColor)
+    table.cell(priceTable, 0, 2, 'Proximity', text_halign = 'left', text_size = size.normal, text_color = #1414e3, bgcolor = proximityBgColor)
     table.cell(priceTable, 1, 2, str.tostring(int(proximityValue)), text_halign = 'center', text_size = size.small, bgcolor = proximityBgColor)
 
     // Add Smoothed RSI to Price Table
@@ -686,35 +686,40 @@ if showInfoTables
     else
         rsiText := 'No Trade Zone'
 
-    table.cell(priceTable, 0, 3, 'Smoothed RSI', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
+    table.cell(priceTable, 0, 3, 'Smoothed RSI', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
     table.cell(priceTable, 1, 3, rsiText, text_halign = 'center', text_size = size.small, text_color = rsiColor)
 
     // Add RSI Signal Type to Price Table
     rsiSignalText = rsiCrossover ? "Blue" : "White"
     rsiSignalColor = rsiCrossover ? color.blue : color.white
 
-    table.cell(priceTable, 0, 4, 'RSI Signal Type', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
+    table.cell(priceTable, 0, 4, 'RSI Signal Type', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
     table.cell(priceTable, 1, 4, rsiSignalText, text_halign = 'center', text_size = size.small, text_color = rsiSignalColor)
 
+if showUltimateSignalTable and useUltimateCrossover
     // Populate Ultimate Signal Table
-    if useUltimateCrossover
-        table.clear(ultimateSignalTable, 0, 0, 1, 2)
-        table.set_bgcolor(ultimateSignalTable, tableBgColor)
-        table.set_border_width(ultimateSignalTable, 2)
+    table.clear(ultimateSignalTable, 0, 0, 1, 3)
+    table.set_bgcolor(ultimateSignalTable, tableBgColor)
+    table.set_border_width(ultimateSignalTable, 2)
 
-        var string ultimateSignalRecommendation = "Neutral"
-        if ultimateBuySignal
-            ultimateSignalRecommendation := "Buy"
-        if ultimateSellSignal
-            ultimateSignalRecommendation := "Sell"
+    var string ultimateSignalRecommendation = "Neutral"
+    var float lastAlertPrice = na
+    if ultimateBuySignal
+        ultimateSignalRecommendation := "Buy"
+        lastAlertPrice := close
+    if ultimateSellSignal
+        ultimateSignalRecommendation := "Sell"
+        lastAlertPrice := close
 
-        signalColor = ultimateSignalRecommendation == "Buy" ? color.green : ultimateSignalRecommendation == "Sell" ? color.red : color.white
-        distanceFromMa = close - ultimateMa
+    signalColor = ultimateSignalRecommendation == "Buy" ? color.green : ultimateSignalRecommendation == "Sell" ? color.red : color.white
+    distanceFromMa = close - ultimateMa
 
-        table.cell(ultimateSignalTable, 0, 0, 'Ultimate Signal', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
-        table.cell(ultimateSignalTable, 1, 0, ultimateSignalRecommendation, text_halign = 'center', text_size = size.small, text_color = signalColor)
-        table.cell(ultimateSignalTable, 0, 1, 'Distance from MA', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
-        table.cell(ultimateSignalTable, 1, 1, str.tostring(distanceFromMa, '#.##'), text_halign = 'center', text_size = size.small, text_color = color.white)
+    table.cell(ultimateSignalTable, 0, 0, 'Ultimate Signal', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
+    table.cell(ultimateSignalTable, 1, 0, ultimateSignalRecommendation, text_halign = 'center', text_size = size.small, text_color = signalColor)
+    table.cell(ultimateSignalTable, 0, 1, 'Distance from MA', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
+    table.cell(ultimateSignalTable, 1, 1, str.tostring(distanceFromMa, '#.##'), text_halign = 'center', text_size = size.small, text_color = color.white)
+    table.cell(ultimateSignalTable, 0, 2, 'Last Alert Price', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
+    table.cell(ultimateSignalTable, 1, 2, str.tostring(lastAlertPrice, '#.##'), text_halign = 'center', text_size = size.small, text_color = color.white)
 
 // --- Bar Coloring Block ---
 // @description Consolidates all bar coloring logic based on priority.
@@ -731,8 +736,10 @@ if not na(barsSinceSignal)
     barsSinceSignal := barsSinceSignal + 1
 flashSignalCondition = not na(barsSinceSignal) and barsSinceSignal <= 3 and bar_index % 2 == 0
 
-// Determine final color with priority (Ultimate > RSI > Flash > High Volume)
-color finalBarColor = if useUltimateCrossover and colorUltimateCandles
+// Determine final color with priority (Proximity > Ultimate > RSI > Flash > High Volume)
+color finalBarColor = if useUltimateCrossover and colorProximityCandles and math.abs(close - ultimateMa) <= 20
+    color.new(#f0d900, 50)
+else if useUltimateCrossover and colorUltimateCandles
     close > ultimateMa ? ultimateBullColor : ultimateBearColor
 else if showRSICrossover and rsiCrossover
     color.new(#00008B, 40)
