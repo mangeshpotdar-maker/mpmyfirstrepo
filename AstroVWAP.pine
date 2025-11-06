@@ -511,7 +511,9 @@ var label orlLabel = na
 
 var float openingRangeHigh = na
 var float openingRangeLow = na
+var float openingRangeOpen = na
 var int openingRangeEndTime = na
+var bool range_was_set = false
 
 durationMs = switch openingRangeDuration
     '15 min' => 15 * 60 * 1000
@@ -525,6 +527,8 @@ if isNewDay
     openingRangeEndTime := time + durationMs
     openingRangeHigh := high
     openingRangeLow := low
+    openingRangeOpen := open
+    range_was_set := false
     // Delete previous day's lines and labels
     line.delete(orhLine)
     line.delete(orlLine)
@@ -534,12 +538,21 @@ if isNewDay
 if time < openingRangeEndTime and not na(openingRangeHigh)
     openingRangeHigh := math.max(openingRangeHigh, high)
     openingRangeLow := math.min(openingRangeLow, low)
-    // Draw the lines for the first time after the range ends
-    if time[1] < openingRangeEndTime and time >= openingRangeEndTime and showOpeningRange
-        orhLine := line.new(bar_index, openingRangeHigh, bar_index + 1, openingRangeHigh, extend = extend.right, color = openingRangeColor, width = openingRangeWidth, style = line.style_dashed)
-        orlLine := line.new(bar_index, openingRangeLow, bar_index + 1, openingRangeLow, extend = extend.right, color = openingRangeColor, width = openingRangeWidth, style = line.style_dashed)
-        orhLabel := label.new(time + 86400000, openingRangeHigh, 'ORH: ' + str.tostring(openingRangeHigh, format.mintick), style = label.style_none, textcolor = openingRangeColor, xloc = xloc.bar_time)
-        orlLabel := label.new(time + 86400000, openingRangeLow, 'ORL: ' + str.tostring(openingRangeLow, format.mintick), style = label.style_none, textcolor = openingRangeColor, xloc = xloc.bar_time)
+
+// Draw the lines exactly once after the range ends
+if time >= openingRangeEndTime and not range_was_set and showOpeningRange
+    range_was_set := true
+    orhLine := line.new(bar_index, openingRangeHigh, bar_index + 1, openingRangeHigh, extend = extend.right, color = openingRangeColor, width = openingRangeWidth, style = line.style_dashed)
+    orlLine := line.new(bar_index, openingRangeLow, bar_index + 1, openingRangeLow, extend = extend.right, color = openingRangeColor, width = openingRangeWidth, style = line.style_dashed)
+    orhLabel := label.new(time + 86400000, openingRangeHigh, 'ORH: ' + str.tostring(openingRangeHigh, format.mintick), style = label.style_none, textcolor = openingRangeColor, xloc = xloc.bar_time)
+    orlLabel := label.new(time + 86400000, openingRangeLow, 'ORL: ' + str.tostring(openingRangeLow, format.mintick), style = label.style_none, textcolor = openingRangeColor, xloc = xloc.bar_time)
+
+    // Check for Open = High/Low condition for the first 15 mins
+    if openingRangeDuration == '15 min'
+        if openingRangeOpen == openingRangeHigh
+            label.new(bar_index, high, 'Open = High (Bullish)\n*', yloc = yloc.abovebar, style = label.style_none, textcolor = color.green, size = size.large)
+        if openingRangeOpen == openingRangeLow
+            label.new(bar_index, low, 'Open = Low (Bearish)\n*', yloc = yloc.belowbar, style = label.style_none, textcolor = color.red, size = size.large)
 
 
 if isNewDay and showPDHL
