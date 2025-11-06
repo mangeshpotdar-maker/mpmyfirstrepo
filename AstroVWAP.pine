@@ -589,7 +589,7 @@ if showInfoTables
 
     bullishBearishEmoji = isBullishPhase ? '🟢' : '🔴'
     dayName = str.tostring(dayofweek)
-    const color HEADER_TEXT_COLOR = #c8cce6
+    const color HEADER_TEXT_COLOR = #1414e3
 
     nextEventColor = nextEventName == 'Purnima' ? color.green : color.red
     table.cell(trendTable, 0, 0, 'Current Trend', text_halign = 'left', text_size = size.normal, text_color = HEADER_TEXT_COLOR)
