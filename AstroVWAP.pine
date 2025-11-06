@@ -5,8 +5,8 @@ indicator('Astro VWAP Indicator', 'Astro VWAP', overlay = true)
 // @description Holds all astrological data and settings.
 
 // --- Default Color Constants ---
-const color DEF_BULLISH_COLOR = color.new(#c8e6c9, 87)
-const color DEF_BEARISH_COLOR = color.new(#fccbcd, 92)
+const color DEF_BULLISH_COLOR = color.new(#c8e6c9, 55)
+const color DEF_BEARISH_COLOR = color.new(#fccbcd, 55)
 const color DEF_PDHL_COLOR = #0000FF
 const color DEF_VWAP_UP_COLOR = #a5f411
 const color DEF_VWAP_DOWN_COLOR = #f20f22
@@ -22,11 +22,19 @@ showEclipses = input.bool(true, title = 'Show Eclipse Events', group = 'Display 
 showSolsticesEquinoxes = input.bool(true, title = 'Show Solstice/Equinox Events', group = 'Display Settings')
 showVWAP = input.bool(false, title = 'Show VWAP', group = 'Display Settings')
 showSmoothedVWAP = input.bool(true, title = 'Show Smoothed VWAP', group = 'Display Settings')
-showSignals = input.bool(true, title = 'Show Buy/Sell Signals', group = 'Display Settings')
-showBuySellAlerts = input.bool(false, title = 'Show Alerts based on Crossover', group = 'Display Settings')
-showReversalAlerts = input.bool(true, title = 'Show Alerts based VWAP Reversal', group = 'Display Settings')
-showRsiCrossoverAlerts = input.bool(true, title = 'Show RSI Crossover Alerts', group = 'Display Settings')
-showBgColor = input.bool(false, title = 'Show Background Coloring', group = 'Display Settings')
+
+// --- Signal Settings ---
+showSignals = input.bool(true, title = 'Show Buy/Sell Signals', group = 'Signal Settings')
+useVwapSlopeFilter = input.bool(true, title = 'Filter Signals by VWAP Slope', group = 'Signal Settings')
+useEmaTrendFilter = input.bool(false, title = 'Filter Signals by Long-Term EMA', group = 'Signal Settings')
+showEmaFilter = input.bool(true, title = 'Show EMA Filter Line', group = 'Signal Settings')
+emaFilterLength = input.int(108, title = 'EMA Filter Length', group = 'Signal Settings')
+emaFilterColor = input.color(color.new(#FFD700, 0), title='EMA Filter Color', group='Signal Settings')
+emaFilterWidth = input.int(2, title='EMA Filter Width', group='Signal Settings')
+showBuySellAlerts = input.bool(false, title = 'Show Crossover Alerts', group = 'Signal Settings')
+showReversalAlerts = input.bool(true, title = 'Show VWAP Reversal Alerts', group = 'Signal Settings')
+showRsiCrossoverAlerts = input.bool(true, title = 'Show RSI Crossover Alerts', group = 'Signal Settings')
+showBgColor = input.bool(true, title = 'Show Background Coloring', group = 'Display Settings')
 bullishColor = input.color(DEF_BULLISH_COLOR, title = 'Bullish Color', group = 'Display Settings')
 bearishColor = input.color(DEF_BEARISH_COLOR, title = 'Bearish Color', group = 'Display Settings')
 showPDHL = input.bool(true, title = 'Show Previous Day High/Low', group = 'Display Settings')
@@ -44,6 +52,9 @@ vwapDownColor = input.color(DEF_VWAP_DOWN_COLOR, title = 'VWAP Down Color', grou
 // --- RSI Settings ---
 rsiLength = input.int(14, title = 'RSI Length', group = 'RSI Settings')
 rsiCrossoverThreshold = input.int(60, title = 'RSI Crossover Threshold', group = 'RSI Settings')
+showRsiCrossunder = input.bool(true, title = 'Show RSI Crossunder Signal', group = 'RSI Settings')
+rsiCrossunderThreshold = input.int(40, title = 'RSI Crossunder Threshold', group = 'RSI Settings')
+rsiCrossunderColor = input.color(color.new(#9C27B0, 40), title = 'RSI Crossunder Color', group = 'RSI Settings')
 rsiSmoothingType = input.string('SMA', title = 'RSI Smoothing Type', options = ['SMA', 'EMA', 'TMA', 'HMA'], group = 'RSI Settings')
 rsiSmoothingLength = input.int(14, title = 'RSI Smoothing Length', group = 'RSI Settings')
 showRsiCrossoverLines = input.bool(true, title = 'Show RSI Crossover Lines & Labels', group = 'RSI Settings')
@@ -261,6 +272,7 @@ smoothedRsi = switch rsiSmoothingType
         rsiSmaSmoothed
 
 rsiCrossover = ta.crossover(smoothedRsi, rsiCrossoverThreshold)
+rsiCrossunder = ta.crossunder(smoothedRsi, rsiCrossunderThreshold)
 
 // --- END --- RSI Crossover Block
 
@@ -307,11 +319,25 @@ if month == 9 and dayofmonth == 10 and dayofmonth[1] == 9
 isBullishPhase = lastPurnima > lastAmavasya
 isBearishPhase = lastAmavasya > lastPurnima
 
-buy_signal_raw = ta.crossover(close, smoothedVwapValue)
-sell_signal_raw = ta.crossunder(close, smoothedVwapValue)
+// The core signal trigger is now the VWAP turning up or down.
+buy_signal_raw = vwapTurnUp
+sell_signal_raw = vwapTurnDown
 
-buySignal = buy_signal_raw[1] and isBullishPhase
-sellSignal = sell_signal_raw[1] and isBearishPhase
+// --- Trend Filters ---
+
+// VWAP Slope Filter
+vwap_buy_filter = useVwapSlopeFilter ? vwapSlope > 0 : true
+vwap_sell_filter = useVwapSlopeFilter ? vwapSlope < 0 : true
+
+// Long-Term EMA Trend Filter
+longEma = ta.ema(close, emaFilterLength)
+plot(showEmaFilter ? longEma : na, title='EMA Filter', color=emaFilterColor, linewidth=emaFilterWidth)
+ema_buy_filter = useEmaTrendFilter ? close > longEma : true
+ema_sell_filter = useEmaTrendFilter ? close < longEma : true
+
+// Combine all filters
+buySignal = buy_signal_raw[1] and isBullishPhase and vwap_buy_filter and ema_buy_filter
+sellSignal = sell_signal_raw[1] and isBearishPhase and vwap_sell_filter and ema_sell_filter
 
 // --- END --- Signals Block
 
@@ -349,6 +375,9 @@ if showRSICrossover and rsiCrossover
 if array.size(rsiLabels) > max_drawings * 2 // Allow for two labels per event
     label.delete(array.shift(rsiLabels))
     label.delete(array.shift(rsiLabels))
+
+if showRsiCrossunder and rsiCrossunder
+    array.push(rsiLabels, label.new(bar_index, high, 'RSI < 40', style = label.style_label_down, color = rsiCrossunderColor, textcolor = color.white, size = size.small))
 
 if buySignal and showSignals
     array.push(signalLabels, label.new(bar_index, low, '🚀 Buy', style = label.style_label_up, color = color.new(color.green, 20), textcolor = color.white, size = size.normal, yloc = yloc.belowbar))
@@ -486,7 +515,7 @@ if isNewDay and showPDHL
 
 // --- Info Table ---
 var table trendTable = table.new(trendTablePosition, 2, 4, border_width = 2, border_color = tableBorderColor)
-var table priceTable = table.new(priceTablePosition, 2, 4, border_width = 2, border_color = tableBorderColor)
+var table priceTable = table.new(priceTablePosition, 2, 5, border_width = 2, border_color = tableBorderColor)
 
 if showInfoTables
     // Clear and set up Trend Table
@@ -495,7 +524,7 @@ if showInfoTables
     table.set_border_width(trendTable, 2)
 
     // Clear and set up Price Table
-    table.clear(priceTable, 0, 0, 1, 3)
+    table.clear(priceTable, 0, 0, 1, 4)
     table.set_bgcolor(priceTable, tableBgColor)
     table.set_border_width(priceTable, 2)
 
@@ -517,18 +546,18 @@ if showInfoTables
     dayName = str.tostring(dayofweek)
 
     nextEventColor = nextEventName == 'Purnima' ? color.green : color.red
-    table.cell(trendTable, 0, 0, 'Current Trend', text_halign = 'left', text_size = size.small, text_color = color.white)
+    table.cell(trendTable, 0, 0, 'Current Trend', text_halign = 'left', text_size = size.normal, text_color = color.white)
     table.cell(trendTable, 1, 0, bullishBearishEmoji, text_halign = 'center', text_size = size.small, text_color = color.white)
-    table.cell(trendTable, 0, 1, 'Next Event', text_halign = 'left', text_size = size.small, text_color = color.white)
-    table.cell(trendTable, 1, 1, nextEventName, text_halign = 'center', text_color = nextEventColor)
-    table.cell(trendTable, 0, 2, 'Days to Event', text_halign = 'left', text_size = size.small, text_color = color.white)
-    table.cell(trendTable, 1, 2, str.tostring(int(daysToNextEvent)), text_halign = 'center', text_color = color.white)
+    table.cell(trendTable, 0, 1, 'Next Event', text_halign = 'left', text_size = size.normal, text_color = color.white)
+    table.cell(trendTable, 1, 1, nextEventName, text_halign = 'center', text_size = size.small, text_color = nextEventColor)
+    table.cell(trendTable, 0, 2, 'Days to Event', text_halign = 'left', text_size = size.normal, text_color = color.white)
+    table.cell(trendTable, 1, 2, str.tostring(int(daysToNextEvent)), text_halign = 'center', text_size = size.small, text_color = color.white)
 
     // Populate Price Table
-    table.cell(priceTable, 0, 0, 'Close', text_halign = 'left', text_size = size.small, text_color = color.white)
-    table.cell(priceTable, 1, 0, str.tostring(int(close)), text_halign = 'center')
-    table.cell(priceTable, 0, 1, 'VWAP', text_halign = 'left', text_size = size.small, text_color = color.white)
-    table.cell(priceTable, 1, 1, str.tostring(int(vwapValue)), text_halign = 'center')
+    table.cell(priceTable, 0, 0, 'Close', text_halign = 'left', text_size = size.normal, text_color = color.white)
+    table.cell(priceTable, 1, 0, str.tostring(int(close)), text_halign = 'center', text_size = size.small)
+    table.cell(priceTable, 0, 1, 'VWAP', text_halign = 'left', text_size = size.normal, text_color = color.white)
+    table.cell(priceTable, 1, 1, str.tostring(int(vwapValue)), text_halign = 'center', text_size = size.small)
 
     proximityValue = close - vwapValue
 
@@ -545,8 +574,24 @@ if showInfoTables
     else
         tableBgColor
 
-    table.cell(priceTable, 0, 2, 'Proximity', text_halign = 'left', text_size = size.small, text_color = color.white, bgcolor = proximityBgColor)
-    table.cell(priceTable, 1, 2, str.tostring(int(proximityValue)), text_halign = 'center', bgcolor = proximityBgColor)
+    table.cell(priceTable, 0, 2, 'Proximity', text_halign = 'left', text_size = size.normal, text_color = color.white, bgcolor = proximityBgColor)
+    table.cell(priceTable, 1, 2, str.tostring(int(proximityValue)), text_halign = 'center', text_size = size.small, bgcolor = proximityBgColor)
+
+    // Add Smoothed RSI to Price Table
+    rsiText = ''
+    rsiColor = color.white
+
+    if smoothedRsi > 60
+        rsiText := str.tostring(smoothedRsi, '#.##')
+        rsiColor := color.green
+    else if smoothedRsi < 40
+        rsiText := str.tostring(smoothedRsi, '#.##')
+        rsiColor := color.red
+    else
+        rsiText := 'No Trade Zone'
+
+    table.cell(priceTable, 0, 3, 'Smoothed RSI', text_halign = 'left', text_size = size.normal, text_color = color.white)
+    table.cell(priceTable, 1, 3, rsiText, text_halign = 'center', text_size = size.small, text_color = rsiColor)
 
 // --- Bar Coloring Block ---
 // @description Consolidates all bar coloring logic based on priority.
@@ -566,6 +611,8 @@ flashSignalCondition = not na(barsSinceSignal) and barsSinceSignal <= 3 and bar_
 // Determine final color with priority (RSI > Flash > High Volume)
 color finalBarColor = if showRSICrossover and rsiCrossover
     color.new(#00008B, 40)
+else if showRsiCrossunder and rsiCrossunder
+    rsiCrossunderColor
 else if flashSignalCondition
     color.new(color.yellow, 50)
 else if colorHighVolume and highVolume
