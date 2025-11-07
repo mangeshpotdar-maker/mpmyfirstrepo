@@ -1,5 +1,6 @@
 //@version=6
-indicator('Astro VWAP Indicator', 'Astro VWAP', overlay = true, display=display.all-display.status_line)
+// Note: The "Show Indicator Arguments" setting in the indicator's settings (right-click on indicator) must be unchecked manually to hide the inputs from the status line.
+indicator('Astro VWAP Indicator', 'Astro VWAP', overlay = true)
 
 // --- START --- Astro Block
 // @description Holds all astrological data and settings.
@@ -711,6 +712,9 @@ if showPriceTable
     table.cell(priceTable, 0, 4, 'RSI Signal Type', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
     table.cell(priceTable, 1, 4, rsiSignalText, text_halign = 'center', text_size = size.normal, text_color = rsiSignalColor)
 
+// --- Global ATR Calculation for Consistency ---
+atrValue = ta.atr(14)
+
 if showUltimateSignalTable and useUltimateCrossover
     // Populate Ultimate Signal Table
     table.clear(ultimateSignalTable, 0, 0, 1, 5)
@@ -729,7 +733,7 @@ if showUltimateSignalTable and useUltimateCrossover
     signalColor = ultimateSignalRecommendation == "Buy" ? color.green : ultimateSignalRecommendation == "Sell" ? color.red : color.white
     distanceFromMa = close - ultimateMa
 
-    isProximity = useUltimateCrossover and colorProximityCandles and math.abs(close - ultimateMa) <= (ta.atr(14) * proximityAtrMultiplier)
+    isProximity = useUltimateCrossover and colorProximityCandles and math.abs(close - ultimateMa) <= (atrValue * proximityAtrMultiplier)
     tradeStatusText = isProximity ? "Get Ready to Trade" : "Wait Patiently......."
     tradeStatusColor = if isProximity
         if close > ultimateMa
@@ -746,7 +750,7 @@ if showUltimateSignalTable and useUltimateCrossover
     table.cell(ultimateSignalTable, 0, 2, 'Last Alert Price', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
     table.cell(ultimateSignalTable, 1, 2, str.tostring(lastAlertPrice, '#.##'), text_halign = 'center', text_size = size.normal, text_color = color.black)
     table.cell(ultimateSignalTable, 0, 3, 'ATR', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
-    table.cell(ultimateSignalTable, 1, 3, str.tostring(ta.atr(14), '#.##'), text_halign = 'center', text_size = size.normal, text_color = color.black)
+    table.cell(ultimateSignalTable, 1, 3, str.tostring(atrValue, '#.##'), text_halign = 'center', text_size = size.normal, text_color = color.black)
     table.cell(ultimateSignalTable, 0, 4, 'Trade Status', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
     table.cell(ultimateSignalTable, 1, 4, tradeStatusText, text_halign = 'center', text_size = size.normal, text_color = tradeStatusColor)
 
@@ -770,7 +774,6 @@ if not na(barsSinceSignal)
 flashSignalCondition = not na(barsSinceSignal) and barsSinceSignal <= 3 and bar_index % 2 == 0
 
 // Determine final color with priority (Proximity > Ultimate > RSI > Flash > High Volume)
-atrValue = ta.atr(14)
 proximityRange = atrValue * proximityAtrMultiplier
 color finalBarColor = if useUltimateCrossover and colorProximityCandles and math.abs(close - ultimateMa) <= proximityRange
     color.new(#f0d900, 50)
