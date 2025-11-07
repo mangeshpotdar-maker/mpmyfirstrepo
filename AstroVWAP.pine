@@ -796,6 +796,8 @@ alertcondition(useUltimateCrossover and ultimateSellSignal and showUltimateCross
 
 // --- START --- Regression Channel Block
 // @description Calculates and plots a regression channel based on Pearson's R.
+var line upper = na
+var line lower = na
 
 calcSlope(source, length) =>
     max_bars_back(source, 5000)
@@ -848,6 +850,8 @@ calcDev(source, length, slope, average, intercept) =>
     pearsonR = dsxx == 0 or dsyy == 0 ? 0 : dsxy / math.sqrt(dsxx * dsyy)
     [stdDev, pearsonR, upDev, dnDev]
 
+[s, a, i] = calcSlope(sourceInput, lengthInput)
+
 if showRegressionChannel
     extendStyle = if extendLeftInput and extendRightInput
         extend.both
@@ -858,7 +862,6 @@ if showRegressionChannel
     else
         extend.none
 
-    [s, a, i] = calcSlope(sourceInput, lengthInput)
     startPrice = i + s * (lengthInput - 1)
     endPrice = i
     var line baseLine = na
@@ -871,10 +874,8 @@ if showRegressionChannel
     [stdDev, pearsonR, upDev, dnDev] = calcDev(sourceInput, lengthInput, s, a, i)
     upperStartPrice = startPrice + (useUpperDevInput ? upperMultInput * stdDev : upDev)
     upperEndPrice = endPrice + (useUpperDevInput ? upperMultInput * stdDev : upDev)
-    var line upper = na
     lowerStartPrice = startPrice + (useLowerDevInput ? -lowerMultInput * stdDev : -dnDev)
     lowerEndPrice = endPrice + (useLowerDevInput ? -lowerMultInput * stdDev : -dnDev)
-    var line lower = na
     if na(upper) and not na(upperStartPrice)
         upper := line.new(bar_index - lengthInput + 1, upperStartPrice, bar_index, upperEndPrice, width=1, extend=extendStyle, color=color.new(colorUpper, 0))
     else
@@ -888,11 +889,6 @@ if showRegressionChannel
     linefill.new(upper, baseLine, color = colorUpper)
     linefill.new(baseLine, lower, color = colorLower)
 
-    float trend = math.sign(startPrice - endPrice)
-    alertcondition(sourceInput > line.get_price(upper, bar_index) or sourceInput < line.get_price(lower, bar_index), title='Regression Channel Exited', message="The price movement has exited Regression Channel's bounds")
-    alertcondition(trend[1] >= 0 and trend < 0, title='Switched to Uptrend',   message='The Regression Channel trend switched from Downtrend to Uptrend')
-    alertcondition(trend[1] <= 0 and trend > 0, title='Switched to Downtrend', message='The Regression Channel trend switched from Uptrend to Downtrend')
-
     // Pearson's R
     var label r = na
     label.delete(r[1])
@@ -900,5 +896,11 @@ if showRegressionChannel
         r := label.new(bar_index - lengthInput + 1, lowerStartPrice, str.tostring(pearsonR, "#.################"), color = color.new(color.white, 100), textcolor=color.new(colorUpper, 0), size=size.normal, style=label.style_label_up)
 
 // --- END --- Regression Channel Block
+
+// --- Regression Channel Alerts ---
+float trend = showRegressionChannel ? math.sign(s) : na
+alertcondition(showRegressionChannel and (sourceInput > line.get_price(upper, bar_index) or sourceInput < line.get_price(lower, bar_index)), title='Regression Channel Exited', message="The price movement has exited Regression Channel's bounds")
+alertcondition(showRegressionChannel and trend[1] >= 0 and trend < 0, title='Switched to Uptrend',   message='The Regression Channel trend switched from Downtrend to Uptrend')
+alertcondition(showRegressionChannel and trend[1] <= 0 and trend > 0, title='Switched to Downtrend', message='The Regression Channel trend switched from Uptrend to Downtrend')
 
 // --- END --- Alerts Block
