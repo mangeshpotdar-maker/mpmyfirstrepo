@@ -453,6 +453,18 @@ if bearishReversalSignal and not useUltimateCrossover
     array.push(signalLabels, label.new(bar_index, na, '🔥 Reversal Point', yloc = yloc.abovebar, style = label.style_label_down, color = color.new(color.red, 100), textcolor = color.new(color.red, 0), size = size.small))
 
 // --- Ultimate Crossover Labels ---
+var line latestSignalLine = na
+var label latestSignalLabel = na
+
+if useUltimateCrossover and (ultimateBuySignal or ultimateSellSignal)
+    // Delete old line and label
+    line.delete(latestSignalLine)
+    label.delete(latestSignalLabel)
+
+    // Create new line and label
+    latestSignalLine := line.new(bar_index, close, bar_index + 1, close, extend = extend.right, color = ultimateBuySignal ? color.green : color.red, width = 2)
+    latestSignalLabel := label.new(time + 86400000, close, ultimateBuySignal ? 'Ultimate Buy' : 'Ultimate Sell', style = label.style_none, textcolor = ultimateBuySignal ? color.green : color.red, xloc = xloc.bar_time)
+
 if useUltimateCrossover and ultimateBuySignal
     label.new(bar_index, low, 'Ultimate Buy', style = label.style_label_up, color = color.new(color.green, 20), textcolor = color.white, size = size.normal, yloc = yloc.belowbar)
 
@@ -741,7 +753,7 @@ if showUltimateSignalTable and useUltimateCrossover
         else
             color.red
     else
-        color.white
+        color.black
 
     table.cell(ultimateSignalTable, 0, 0, 'Ultimate Signal', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
     table.cell(ultimateSignalTable, 1, 0, ultimateSignalRecommendation, text_halign = 'center', text_size = size.normal, text_color = signalColor)
