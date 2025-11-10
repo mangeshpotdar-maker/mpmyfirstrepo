@@ -467,10 +467,10 @@ if useUltimateCrossover and (ultimateBuySignal or ultimateSellSignal)
     latestSignalLabel := label.new(time + 86400000, close, ultimateBuySignal ? 'Ultimate Buy' : 'Ultimate Sell', style = label.style_none, textcolor = ultimateBuySignal ? color.green : color.red, xloc = xloc.bar_time)
 
 if useUltimateCrossover and ultimateBuySignal
-    label.new(bar_index, low, 'Ultimate Buy', style = label.style_label_up, color = color.new(color.green, 20), textcolor = color.white, size = size.normal, yloc = yloc.belowbar)
+    label.new(bar_index, low, '🚀 Ultimate Buy', style = label.style_label_up, color = color.new(color.green, 20), textcolor = color.white, size = size.small, yloc = yloc.belowbar)
 
 if useUltimateCrossover and ultimateSellSignal
-    label.new(bar_index, high, 'Ultimate Sell', style = label.style_label_down, color = color.new(color.red, 20), textcolor = color.white, size = size.normal, yloc = yloc.abovebar)
+    label.new(bar_index, high, '💥 Ultimate Sell', style = label.style_label_down, color = color.new(color.red, 20), textcolor = color.white, size = size.small, yloc = yloc.abovebar)
 
 plotshape(bullishReversalSignal, style = shape.diamond, location = location.belowbar, color = color.new(color.green, 0), size = size.tiny)
 plotshape(bearishReversalSignal, style = shape.diamond, location = location.abovebar, color = color.new(color.red, 0), size = size.tiny)
@@ -796,9 +796,9 @@ proximityRange = atrValue * proximityAtrMultiplier
 color finalBarColor = if useUltimateCrossover and colorProximityCandles and math.abs(close - ultimateMa) <= proximityRange
     color.new(#f0d900, 50)
 else if useUltimateCrossover and rsiCrossover
-    color.new(color.blue, 40)
+    color.blue
 else if useUltimateCrossover and rsiCrossunder
-    color.new(color.purple, 40)
+    color.purple
 else if useUltimateCrossover and colorUltimateCandles
     close > ultimateMa ? ultimateBullColor : ultimateBearColor
 else if showRSICrossover and rsiCrossover
@@ -819,6 +819,10 @@ plot(showRSICrossover and rsiCrossover ? high : na, "RSI High Border", color = c
 plot(showRSICrossover and rsiCrossover ? low : na, "RSI Low Border", color = color.new(color.aqua, 70), linewidth = 5, style = plot.style_cross)
 plot(showRsiCrossunder and rsiCrossunder ? high : na, "RSI High Border", color = color.new(color.fuchsia, 70), linewidth = 5, style = plot.style_cross)
 plot(showRsiCrossunder and rsiCrossunder ? low : na, "RSI Low Border", color = color.new(color.fuchsia, 70), linewidth = 5, style = plot.style_cross)
+
+// --- RSI Crossover Shapes for Ultimate Signal ---
+plotshape(useUltimateCrossover and rsiCrossover, 'RSI Buy Signal', style=shape.arrowup, location=location.belowbar, color=color.new(color.blue, 0), size=size.small)
+plotshape(useUltimateCrossover and rsiCrossunder, 'RSI Sell Signal', style=shape.arrowdown, location=location.abovebar, color=color.new(color.purple, 0), size=size.small)
 
 // --- END --- Plotting Block
 
