@@ -22,6 +22,7 @@ ultimateMaType = input.string('EMA', title = 'MA Type', options = ['EMA', 'SMA',
 ultimateMaPeriod = input.int(108, title = 'MA Period', group = 'Ultimate Crossover Settings')
 ultimateMaColor = input.color(color.new(#FFD700, 0), title='MA Color', group='Ultimate Crossover Settings')
 ultimateMaWidth = input.int(2, title='MA Width', group='Ultimate Crossover Settings')
+showUltimateMaLine = input.bool(true, title='Show MA Line', group='Ultimate Crossover Settings')
 showUltimateCrossoverAlerts = input.bool(true, title = 'Show Alerts', group = 'Ultimate Crossover Settings')
 colorUltimateCandles = input.bool(true, title = 'Color Candles', group = 'Ultimate Crossover Settings')
 ultimateBullColor = input.color(color.new(#40a998, 0), title = 'Bullish Color', group = 'Ultimate Crossover Settings')
@@ -368,7 +369,7 @@ ultimateBuySignal = ta.crossover(close, ultimateMa)
 ultimateSellSignal = ta.crossunder(close, ultimateMa)
 
 // --- Plotting ---
-plot(useUltimateCrossover ? ultimateMa : na, title='Ultimate MA', color=ultimateMaColor, linewidth=ultimateMaWidth, trackprice=true)
+plot(showUltimateMaLine ? ultimateMa : na, title='Ultimate MA', color=ultimateMaColor, linewidth=ultimateMaWidth, trackprice=true)
 
 // --- END --- Ultimate Crossover Block
 
