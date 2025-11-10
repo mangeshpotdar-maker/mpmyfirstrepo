@@ -368,7 +368,7 @@ ultimateBuySignal = ta.crossover(close, ultimateMa)
 ultimateSellSignal = ta.crossunder(close, ultimateMa)
 
 // --- Plotting ---
-plot(useUltimateCrossover ? ultimateMa : na, title='Ultimate MA', color=ultimateMaColor, linewidth=ultimateMaWidth)
+plot(useUltimateCrossover ? ultimateMa : na, title='Ultimate MA', color=ultimateMaColor, linewidth=ultimateMaWidth, trackprice=true)
 
 // --- END --- Ultimate Crossover Block
 
@@ -644,7 +644,7 @@ if isNewDay and showPDHL
 // --- Info Table ---
 var table trendTable = table.new(trendTablePosition, 2, 4, border_width = 2, border_color = tableBorderColor)
 var table priceTable = table.new(priceTablePosition, 2, 6, border_width = 2, border_color = tableBorderColor)
-var table ultimateSignalTable = table.new(ultimateSignalTablePosition, 2, 6, border_width = 2, border_color = tableBorderColor)
+var table ultimateSignalTable = table.new(ultimateSignalTablePosition, 2, 7, border_width = 2, border_color = tableBorderColor)
 
 if showTrendTable
     // Clear and set up Trend Table
@@ -757,18 +757,23 @@ if showUltimateSignalTable and useUltimateCrossover
 
     table.cell(ultimateSignalTable, 0, 0, 'Ultimate Signal', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
     table.cell(ultimateSignalTable, 1, 0, ultimateSignalRecommendation, text_halign = 'center', text_size = size.normal, text_color = signalColor)
-    table.cell(ultimateSignalTable, 0, 1, 'Distance from MA', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
-    table.cell(ultimateSignalTable, 1, 1, str.tostring(distanceFromMa, '#.##'), text_halign = 'center', text_size = size.normal, text_color = color.black)
-    table.cell(ultimateSignalTable, 0, 2, 'Last Alert Price', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
-    table.cell(ultimateSignalTable, 1, 2, str.tostring(lastAlertPrice, '#.##'), text_halign = 'center', text_size = size.normal, text_color = color.black)
-    table.cell(ultimateSignalTable, 0, 3, 'ATR', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
-    table.cell(ultimateSignalTable, 1, 3, str.tostring(atrValue, '#.##'), text_halign = 'center', text_size = size.normal, text_color = color.black)
-    table.cell(ultimateSignalTable, 0, 4, 'Trade Status', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
-    table.cell(ultimateSignalTable, 1, 4, tradeStatusText, text_halign = 'center', text_size = size.normal, text_color = tradeStatusColor)
+
+    bestEntryPointColor = ultimateSignalRecommendation == "Buy" ? color.green : ultimateSignalRecommendation == "Sell" ? color.red : color.white
+    table.cell(ultimateSignalTable, 0, 1, 'Best Entry Point', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
+    table.cell(ultimateSignalTable, 1, 1, str.tostring(ultimateMa, '#.##'), text_halign = 'center', text_size = size.normal, text_color = bestEntryPointColor)
+
+    table.cell(ultimateSignalTable, 0, 2, 'Distance from MA', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
+    table.cell(ultimateSignalTable, 1, 2, str.tostring(distanceFromMa, '#.##'), text_halign = 'center', text_size = size.normal, text_color = color.black)
+    table.cell(ultimateSignalTable, 0, 3, 'Last Alert Price', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
+    table.cell(ultimateSignalTable, 1, 3, str.tostring(lastAlertPrice, '#.##'), text_halign = 'center', text_size = size.normal, text_color = color.black)
+    table.cell(ultimateSignalTable, 0, 4, 'ATR', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
+    table.cell(ultimateSignalTable, 1, 4, str.tostring(atrValue, '#.##'), text_halign = 'center', text_size = size.normal, text_color = color.black)
+    table.cell(ultimateSignalTable, 0, 5, 'Trade Status', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
+    table.cell(ultimateSignalTable, 1, 5, tradeStatusText, text_halign = 'center', text_size = size.normal, text_color = tradeStatusColor)
 
     distanceFromLastAlert = close - lastAlertPrice
-    table.cell(ultimateSignalTable, 0, 5, 'Dist from Alert', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
-    table.cell(ultimateSignalTable, 1, 5, str.tostring(distanceFromLastAlert, '#.##'), text_halign = 'center', text_size = size.normal, text_color = color.black)
+    table.cell(ultimateSignalTable, 0, 6, 'Dist from Alert', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
+    table.cell(ultimateSignalTable, 1, 6, str.tostring(distanceFromLastAlert, '#.##'), text_halign = 'center', text_size = size.normal, text_color = color.black)
 
 // --- Bar Coloring Block ---
 // @description Consolidates all bar coloring logic based on priority.
@@ -785,10 +790,14 @@ if not na(barsSinceSignal)
     barsSinceSignal := barsSinceSignal + 1
 flashSignalCondition = not na(barsSinceSignal) and barsSinceSignal <= 3 and bar_index % 2 == 0
 
-// Determine final color with priority (Proximity > Ultimate > RSI > Flash > High Volume)
+// Determine final color with priority (Proximity > RSI > Ultimate > Flash > High Volume)
 proximityRange = atrValue * proximityAtrMultiplier
 color finalBarColor = if useUltimateCrossover and colorProximityCandles and math.abs(close - ultimateMa) <= proximityRange
     color.new(#f0d900, 50)
+else if useUltimateCrossover and rsiCrossover
+    color.new(color.blue, 40)
+else if useUltimateCrossover and rsiCrossunder
+    color.new(color.purple, 40)
 else if useUltimateCrossover and colorUltimateCandles
     close > ultimateMa ? ultimateBullColor : ultimateBearColor
 else if showRSICrossover and rsiCrossover
