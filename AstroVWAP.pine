@@ -64,6 +64,7 @@ emaFilterWidth = input.int(2, title='EMA Filter Width', group='Signal Settings')
 showBuySellAlerts = input.bool(false, title = 'Show Crossover Alerts', group = 'Signal Settings')
 showReversalAlerts = input.bool(true, title = 'Show VWAP Reversal Alerts', group = 'Signal Settings')
 showRsiCrossoverAlerts = input.bool(true, title = 'Show RSI Crossover Alerts', group = 'Signal Settings')
+rsiAlertUpcrossThreshold = input.int(40, title = 'RSI Alert Upcross Threshold', group = 'Signal Settings')
 
 showBgColor = input.bool(true, title = 'Show Background Coloring', group = 'Display Settings')
 bullishColor = input.color(DEF_BULLISH_COLOR, title = 'Bullish Color', group = 'Display Settings')
@@ -841,7 +842,7 @@ alertcondition(buySignal and showBuySellAlerts, title = 'Buy Signal', message = 
 alertcondition(sellSignal and showBuySellAlerts, title = 'Sell Signal', message = 'Sell Signal: Close crossed below Smoothed VWAP in Bearish Phase')
 alertcondition(vwapTurnUp and isBullishPhase and showReversalAlerts, title = 'Bullish Reversal', message = 'Bullish Reversal: Smoothed VWAP turned up in Bullish Phase')
 alertcondition(vwapTurnDown and isBearishPhase and showReversalAlerts, title = 'Bearish Reversal', message = 'Bearish Reversal: Smoothed VWAP turned down in Bearish Phase')
-alertcondition(rsiCrossover and showRsiCrossoverAlerts, title = 'Buy - RSI above 60', message = 'Buy Signal: Smoothed RSI crossed above 60')
+alertcondition(ta.crossover(smoothedRsi, rsiAlertUpcrossThreshold) and showRsiCrossoverAlerts, title = 'RSI Upcross Alert', message = 'Alert: Smoothed RSI crossed above ' + str.tostring(rsiAlertUpcrossThreshold))
 alertcondition(rsiCrossunder and showRsiCrossoverAlerts, title = 'Sell - RSI Below 40', message = 'Sell Signal: Smoothed RSI crossed below 40')
 alertcondition(useUltimateCrossover and ultimateBuySignal and showUltimateCrossoverAlerts, title = 'Ultimate Buy Signal', message = 'Ultimate Buy: Close crossed above the selected Moving Average')
 alertcondition(useUltimateCrossover and ultimateSellSignal and showUltimateCrossoverAlerts, title = 'Ultimate Sell Signal', message = 'Ultimate Sell: Close crossed below the selected Moving Average')
@@ -853,7 +854,7 @@ var line lower = na
 
 calcSlope(source, length) =>
     max_bars_back(source, 5000)
-    if not barstate.islast or length <= 1
+    if length <= 1
         [float(na), float(na), float(na)]
     else
         sumX = 0.0
