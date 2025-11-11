@@ -821,8 +821,13 @@ plot(showRsiCrossunder and rsiCrossunder ? high : na, "RSI High Border", color =
 plot(showRsiCrossunder and rsiCrossunder ? low : na, "RSI Low Border", color = color.new(color.fuchsia, 70), linewidth = 5, style = plot.style_cross)
 
 // --- RSI Crossover Shapes for Ultimate Signal ---
-plotshape(useUltimateCrossover and rsiCrossover, 'RSI Buy Signal', style=shape.arrowup, location=location.belowbar, color=color.new(color.blue, 0), size=size.small)
-plotshape(useUltimateCrossover and rsiCrossunder, 'RSI Sell Signal', style=shape.arrowdown, location=location.abovebar, color=color.new(color.purple, 0), size=size.small)
+if useUltimateCrossover and rsiCrossover
+    label.new(bar_index, na, "RSI upcross 60", yloc=yloc.belowbar, style=label.style_label_up, color=color.new(color.white, 0), textcolor=color.black, text_style=text.style_bold)
+    plotshape(true, 'RSI Buy Signal', style=shape.arrowup, location=location.belowbar, color=color.new(color.blue, 0), size=size.small)
+
+if useUltimateCrossover and rsiCrossunder
+    label.new(bar_index, na, "RSI undercross 40", yloc=yloc.abovebar, style=label.style_label_down, color=color.new(color.white, 0), textcolor=color.black, text_style=text.style_bold)
+    plotshape(true, 'RSI Sell Signal', style=shape.arrowdown, location=location.abovebar, color=color.new(color.purple, 0), size=size.small)
 
 // --- END --- Plotting Block
 
