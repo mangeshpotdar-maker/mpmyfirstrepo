@@ -74,6 +74,7 @@ pdhlWidth = input.int(2, title = 'PDHL Width', group = 'Display Settings')
 showTrendTable = input.bool(true, title = 'Show Trend Table', group = 'Table Settings')
 showPriceTable = input.bool(true, title = 'Show Price Table', group = 'Table Settings')
 showUltimateSignalTable = input.bool(true, title = 'Show Ultimate Signal Table', group = 'Table Settings')
+showRsiSignalTable = input.bool(true, title = 'Show RSI Signal Table', group = 'Table Settings')
 colorHighVolume = input.bool(true, title = 'Color High Volume Candles', group = 'Display Settings')
 showRSICrossover = input.bool(true, title = 'Show RSI Crossover Candles', group = 'Display Settings')
 showMPGannPivot = input.bool(true, title = 'Show MP Gann Pivot', group = 'Display Settings')
@@ -90,9 +91,9 @@ vwapDownColor = input.color(DEF_VWAP_DOWN_COLOR, title = 'VWAP Down Color', grou
 
 // --- RSI Settings ---
 rsiLength = input.int(14, title = 'RSI Length', group = 'RSI Settings')
-rsiCrossoverThreshold = input.int(60, title = 'RSI Crossover Threshold', group = 'RSI Settings')
+rsiCrossoverThreshold = input.int(55, title = 'RSI Crossover Threshold', group = 'RSI Settings')
 showRsiCrossunder = input.bool(true, title = 'Show RSI Crossunder Signal', group = 'RSI Settings')
-rsiCrossunderThreshold = input.int(40, title = 'RSI Crossunder Threshold', group = 'RSI Settings')
+rsiCrossunderThreshold = input.int(55, title = 'RSI Crossunder Threshold', group = 'RSI Settings')
 rsiCrossunderColor = input.color(color.new(#9C27B0, 40), title = 'RSI Crossunder Color', group = 'RSI Settings')
 rsiSmoothingType = input.string('EMA', title = 'RSI Smoothing Type', options = ['SMA', 'EMA', 'TMA', 'HMA'], group = 'RSI Settings')
 rsiSmoothingLength = input.int(3, title = 'RSI Smoothing Length', group = 'RSI Settings')
@@ -117,6 +118,7 @@ separatorWidth = input.int(2, title = 'Separator Width', group = 'Display Settin
 trendTablePosition = input.string(position.bottom_right, 'Trend Table Position', options = [position.top_left, position.top_center, position.top_right, position.middle_left, position.middle_center, position.middle_right, position.bottom_left, position.bottom_center, position.bottom_right], group = 'Table Settings')
 priceTablePosition = input.string(position.bottom_left, 'Price Table Position', options = [position.top_left, position.top_center, position.top_right, position.middle_left, position.middle_center, position.middle_right, position.bottom_left, position.bottom_center, position.bottom_right], group = 'Table Settings')
 ultimateSignalTablePosition = input.string(position.top_right, 'Ultimate Signal Table Position', options = [position.top_left, position.top_center, position.top_right, position.middle_left, position.middle_center, position.middle_right, position.bottom_left, position.bottom_center, position.bottom_right], group = 'Table Settings')
+rsiSignalTablePosition = input.string(position.middle_right, 'RSI Signal Table Position', options = [position.top_left, position.top_center, position.top_right, position.middle_left, position.middle_center, position.middle_right, position.bottom_left, position.bottom_center, position.bottom_right], group = 'Table Settings')
 tableBgColor = input.color(color.new(color.gray, 80), 'Table BG Color', group = 'Table Settings')
 tableBorderColor = input.color(color.black, 'Table Border Color', group = 'Table Settings')
 
@@ -430,13 +432,13 @@ var signalLabels = array.new_label()
 var rsiLabels = array.new_label()
 
 if showRSICrossover and rsiCrossover and not useUltimateCrossover
-    array.push(rsiLabels, label.new(bar_index, high, 'Buy - RSI above 60', yloc = yloc.abovebar, style = label.style_label_down, color = color.new(color.green, 85), textcolor = color.green, size = size.normal))
+    array.push(rsiLabels, label.new(bar_index, high, '📈 RSI > ' + str.tostring(rsiCrossoverThreshold), yloc = yloc.abovebar, style = label.style_label_down, color = color.new(color.green, 85), textcolor = color.green, size = size.small))
 
 if array.size(rsiLabels) > max_drawings
     label.delete(array.shift(rsiLabels))
 
 if showRsiCrossunder and rsiCrossunder and not useUltimateCrossover
-    array.push(rsiLabels, label.new(bar_index, low, 'Sell - RSI Below 40', yloc = yloc.belowbar, style = label.style_label_up, color = color.new(color.red, 85), textcolor = color.red, size = size.normal))
+    array.push(rsiLabels, label.new(bar_index, low, '📉 RSI < ' + str.tostring(rsiCrossunderThreshold), yloc = yloc.belowbar, style = label.style_label_up, color = color.new(color.red, 85), textcolor = color.red, size = size.small))
 
 if buySignal and showSignals and not useUltimateCrossover
     array.push(signalLabels, label.new(bar_index, low, '🚀 Buy', style = label.style_label_up, color = color.new(color.green, 20), textcolor = color.white, size = size.normal, yloc = yloc.belowbar))
@@ -646,6 +648,39 @@ if isNewDay and showPDHL
 var table trendTable = table.new(trendTablePosition, 2, 4, border_width = 2, border_color = tableBorderColor)
 var table priceTable = table.new(priceTablePosition, 2, 6, border_width = 2, border_color = tableBorderColor)
 var table ultimateSignalTable = table.new(ultimateSignalTablePosition, 2, 7, border_width = 2, border_color = tableBorderColor)
+var table rsiSignalTable = table.new(rsiSignalTablePosition, 2, 4, border_width = 2, border_color = tableBorderColor)
+
+if showRsiSignalTable
+    table.clear(rsiSignalTable, 0, 0, 1, 3)
+    table.set_bgcolor(rsiSignalTable, tableBgColor)
+    table.set_border_width(rsiSignalTable, 2)
+
+    var string rsiSignalType = "Neutral"
+    var float rsiEntryPoint = na
+
+    if rsiCrossover
+        rsiSignalType := "Upcross"
+        rsiEntryPoint := close
+    if rsiCrossunder
+        rsiSignalType := "Undercross"
+        rsiEntryPoint := close
+
+    rsiSignalColor = rsiSignalType == "Upcross" ? color.green : rsiSignalType == "Undercross" ? color.red : color.white
+    distanceFromRsiAlert = close - rsiEntryPoint
+    percentDistanceFromRsiAlert = (distanceFromRsiAlert / rsiEntryPoint) * 100
+
+    table.cell(rsiSignalTable, 0, 0, 'RSI Signal', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
+    table.cell(rsiSignalTable, 1, 0, rsiSignalType, text_halign = 'center', text_size = size.normal, text_color = rsiSignalColor)
+
+    table.cell(rsiSignalTable, 0, 1, 'Entry Point', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
+    table.cell(rsiSignalTable, 1, 1, str.tostring(rsiEntryPoint, '#.##'), text_halign = 'center', text_size = size.normal, text_color = color.black)
+
+    table.cell(rsiSignalTable, 0, 2, 'Distance', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
+    table.cell(rsiSignalTable, 1, 2, str.tostring(distanceFromRsiAlert, '#.##'), text_halign = 'center', text_size = size.normal, text_color = color.black)
+
+    table.cell(rsiSignalTable, 0, 3, '% Distance', text_halign = 'left', text_size = size.normal, text_color = #1414e3)
+    table.cell(rsiSignalTable, 1, 3, str.tostring(percentDistanceFromRsiAlert, '#.##') + '%', text_halign = 'center', text_size = size.normal, text_color = color.black)
+
 
 if showTrendTable
     // Clear and set up Trend Table
@@ -822,10 +857,10 @@ plot(showRsiCrossunder and rsiCrossunder ? low : na, "RSI Low Border", color = c
 
 // --- RSI Crossover Shapes for Ultimate Signal ---
 if useUltimateCrossover and rsiCrossover
-    label.new(bar_index, na, "RSI upcross 60", yloc=yloc.belowbar, style=label.style_label_up, color=color.new(color.white, 0), textcolor=color.black)
+    label.new(bar_index, na, '📈 RSI > ' + str.tostring(rsiCrossoverThreshold), yloc=yloc.belowbar, style=label.style_label_up, color=color.new(color.white, 0), textcolor=color.black, size=size.small)
 
 if useUltimateCrossover and rsiCrossunder
-    label.new(bar_index, na, "RSI undercross 40", yloc=yloc.abovebar, style=label.style_label_down, color=color.new(color.white, 0), textcolor=color.black)
+    label.new(bar_index, na, '📉 RSI < ' + str.tostring(rsiCrossunderThreshold), yloc=yloc.abovebar, style=label.style_label_down, color=color.new(color.white, 0), textcolor=color.black, size=size.small)
 
 plotshape(useUltimateCrossover and rsiCrossover, 'RSI Buy Signal', style=shape.arrowup, location=location.belowbar, color=color.new(color.blue, 0), size=size.small)
 plotshape(useUltimateCrossover and rsiCrossunder, 'RSI Sell Signal', style=shape.arrowdown, location=location.abovebar, color=color.new(color.purple, 0), size=size.small)
@@ -841,8 +876,8 @@ alertcondition(buySignal and showBuySellAlerts, title = 'Buy Signal', message = 
 alertcondition(sellSignal and showBuySellAlerts, title = 'Sell Signal', message = 'Sell Signal: Close crossed below Smoothed VWAP in Bearish Phase')
 alertcondition(vwapTurnUp and isBullishPhase and showReversalAlerts, title = 'Bullish Reversal', message = 'Bullish Reversal: Smoothed VWAP turned up in Bullish Phase')
 alertcondition(vwapTurnDown and isBearishPhase and showReversalAlerts, title = 'Bearish Reversal', message = 'Bearish Reversal: Smoothed VWAP turned down in Bearish Phase')
-alertcondition(rsiCrossover and showRsiCrossoverAlerts, title = 'RSI Upcross Above 60', message = 'Alert: Smoothed RSI crossed above 60')
-alertcondition(rsiCrossunder and showRsiCrossoverAlerts, title = 'RSI Cross Below 40', message = 'Alert: Smoothed RSI crossed below 40')
+alertcondition(rsiCrossover and showRsiCrossoverAlerts, title = 'RSI Upcross Above Upper Threshold', message = 'Alert: Smoothed RSI crossed above the configured upper threshold')
+alertcondition(rsiCrossunder and showRsiCrossoverAlerts, title = 'RSI Cross Below Lower Threshold', message = 'Alert: Smoothed RSI crossed below the configured lower threshold')
 alertcondition(useUltimateCrossover and ultimateBuySignal and showUltimateCrossoverAlerts, title = 'Ultimate Buy Signal', message = 'Ultimate Buy: Close crossed above the selected Moving Average')
 alertcondition(useUltimateCrossover and ultimateSellSignal and showUltimateCrossoverAlerts, title = 'Ultimate Sell Signal', message = 'Ultimate Sell: Close crossed below the selected Moving Average')
 
