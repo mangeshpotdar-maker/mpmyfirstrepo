@@ -853,8 +853,8 @@ else
 barcolor(finalBarColor)
 
 // --- More Visible RSI Crossover Highlighting ---
-plotshape(showRSICrossover and rsiCrossover, title="RSI Upcross Highlight", text='⭐', style=shape.labelup, location=location.belowbar, color=color.new(color.blue, 50), textcolor=color.white, size=size.normal)
-plotshape(showRsiCrossunder and rsiCrossunder, title="RSI Downcross Highlight", text='⭐', style=shape.labeldown, location=location.abovebar, color=color.new(color.purple, 50), textcolor=color.white, size=size.normal)
+plotshape(showRSICrossover and rsiCrossover, title="RSI Upcross Highlight", text='⭐', style=shape.labelup, location=location.belowbar, color=color.new(color.blue, 50), textcolor=color.white, size=size.small)
+plotshape(showRsiCrossunder and rsiCrossunder, title="RSI Downcross Highlight", text='⭐', style=shape.labeldown, location=location.abovebar, color=color.new(color.purple, 50), textcolor=color.white, size=size.small)
 
 // --- RSI Crossover Shapes for Ultimate Signal ---
 if useUltimateCrossover and rsiCrossover
