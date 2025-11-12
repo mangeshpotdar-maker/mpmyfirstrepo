@@ -849,11 +849,9 @@ else
 
 barcolor(finalBarColor)
 
-// --- Border for RSI Crossover Candles ---
-plot(showRSICrossover and rsiCrossover ? high : na, "RSI High Border", color = color.new(color.aqua, 70), linewidth = 5, style = plot.style_cross)
-plot(showRSICrossover and rsiCrossover ? low : na, "RSI Low Border", color = color.new(color.aqua, 70), linewidth = 5, style = plot.style_cross)
-plot(showRsiCrossunder and rsiCrossunder ? high : na, "RSI High Border", color = color.new(color.fuchsia, 70), linewidth = 5, style = plot.style_cross)
-plot(showRsiCrossunder and rsiCrossunder ? low : na, "RSI Low Border", color = color.new(color.fuchsia, 70), linewidth = 5, style = plot.style_cross)
+// --- More Visible RSI Crossover Highlighting ---
+plotshape(showRSICrossover and rsiCrossover, title="RSI Upcross Highlight", text='⭐', style=shape.labelup, location=location.belowbar, color=color.new(color.blue, 50), textcolor=color.white, size=size.normal)
+plotshape(showRsiCrossunder and rsiCrossunder, title="RSI Downcross Highlight", text='⭐', style=shape.labeldown, location=location.abovebar, color=color.new(color.purple, 50), textcolor=color.white, size=size.normal)
 
 // --- RSI Crossover Shapes for Ultimate Signal ---
 if useUltimateCrossover and rsiCrossover
